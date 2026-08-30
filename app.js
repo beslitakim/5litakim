@@ -2,7 +2,8 @@
    VALO TAKIM - FRONTEND
 ===================================================== */
 
-const API_BASE = "http://localhost:3000/api";
+// Canlı ortamda ve localde sorunsuz çalışması için dinamik API kök yolu
+const API_BASE = "/api";
 
 
 /* =====================================================
@@ -693,11 +694,6 @@ async function updateProfile() {
             status.textContent =
                 "Profil başarıyla güncellendi.";
 
-        /*
-         * Profil rankı değiştiyse
-         * 1 kişi listesini de yenile.
-         */
-
         loadRooms();
 
     }
@@ -744,10 +740,6 @@ async function loadRooms() {
 
     try {
 
-        /*
-         * Profil bilgimizi al.
-         */
-
         const profile =
             await apiRequest(
                 "/profile"
@@ -755,16 +747,6 @@ async function loadRooms() {
 
         currentUser =
             profile.user;
-
-        /*
-         * Rank göndermiyoruz.
-         *
-         * Backend otomatik olarak
-         * profil rankını kullanıyor.
-         *
-         * Örneğin:
-         * Gümüş 2 → Gümüş 1/2/3
-         */
 
         const role =
             document.getElementById(
@@ -1146,20 +1128,6 @@ async function startMatch() {
     }
 
     try {
-
-        /*
-         * Backend PROFİL RANKINI kullanıyor.
-         *
-         * Örnek:
-         *
-         * Gümüş 2
-         *
-         * →
-         *
-         * Gümüş 1
-         * Gümüş 2
-         * Gümüş 3
-         */
 
         const data =
             await apiRequest(
