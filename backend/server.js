@@ -23,7 +23,7 @@ const ROOM_LIFETIME_SECONDS = 180;
 
 /*
 =====================================================
-  CORS & STATİK DOSYALAR (TEMA DÜZELTMESİ)
+  CORS & STATİK DOSYALAR (FRONTEND BAĞLANTISI)
 =====================================================
 */
 
@@ -41,11 +41,10 @@ app.use(
 );
 
 /* 
-  Kritik Ekleme: index.html, style.css ve app.js 
-  dosyalarının tarayıcı tarafından okunabilmesi için 
-  aynı klasör statik olarak dışarı açıldı.
+  Kritik Düzeltme: index.html, style.css ve app.js 
+  dosyalarının bulunduğu ana klasör Express'e tanıtıldı.
 */
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "../")));
 
 /*
 =====================================================
@@ -129,337 +128,123 @@ CREATE TABLE IF NOT EXISTS rank_matches (
 */
 
 const RANK_ORDER = [
-    "Demir 1",
-    "Demir 2",
-    "Demir 3",
-
-    "Bronz 1",
-    "Bronz 2",
-    "Bronz 3",
-
-    "Gümüş 1",
-    "Gümüş 2",
-    "Gümüş 3",
-
-    "Altın 1",
-    "Altın 2",
-    "Altın 3",
-
-    "Platin 1",
-    "Platin 2",
-    "Platin 3",
-
-    "Elmas 1",
-    "Elmas 2",
-    "Elmas 3",
-
-    "Yücelik 1",
-    "Yücelik 2",
-    "Yücelik 3",
-
-    "Ölümsüzlük 1",
-    "Ölümsüzlük 2",
-    "Ölümsüzlük 3",
-
+    "Demir 1", "Demir 2", "Demir 3",
+    "Bronz 1", "Bronz 2", "Bronz 3",
+    "Gümüş 1", "Gümüş 2", "Gümüş 3",
+    "Altın 1", "Altın 2", "Altın 3",
+    "Platin 1", "Platin 2", "Platin 3",
+    "Elmas 1", "Elmas 2", "Elmas 3",
+    "Yücelik 1", "Yücelik 2", "Yücelik 3",
+    "Ölümsüzlük 1", "Ölümsüzlük 2", "Ölümsüzlük 3",
     "Radiant"
 ];
 
-/*
-=====================================================
-  RANK NORMALIZE
-=====================================================
-*/
-
 function normalizeRank(rank) {
-    if (rank === null || rank === undefined) {
-        return "";
-    }
-
-    let value = String(rank)
-        .trim()
-        .normalize("NFC");
-
+    if (!rank) return "";
+    let value = String(rank).trim().normalize("NFC");
     const brokenMap = {
-        "GÃ¼mÃ¼ÅŸ 1": "Gümüş 1",
-        "GÃ¼mÃ¼ÅŸ 2": "Gümüş 2",
-        "GÃ¼mÃ¼ÅŸ 3": "Gümüş 3",
-
-        "AltÄ±n 1": "Altın 1",
-        "AltÄ±n 2": "Altın 2",
-        "AltÄ±n 3": "Altın 3",
-
-        "YÃ¼celik 1": "Yücelik 1",
-        "YÃ¼celik 2": "Yücelik 2",
-        "YÃ¼celik 3": "Yücelik 3",
-
-        "Ã–lÃ¼msÃ¼zlÃ¼k 1": "Ölümsüzlük 1",
-        "Ã–lÃ¼msÃ¼zlÃ¼k 2": "Ölümsüzlük 2",
-        "Ã–lÃ¼msÃ¼zlÃ¼k 3": "Ölümsüzlük 3",
-
-        "Gumus 1": "Gümüş 1",
-        "Gumus 2": "Gümüş 2",
-        "Gumus 3": "Gümüş 3",
-
-        "Altin 1": "Altın 1",
-        "Altin 2": "Altın 2",
-        "Altin 3": "Altın 3",
-
-        "Yucelik 1": "Yücelik 1",
-        "Yucelik 2": "Yücelik 2",
-        "Yucelik 3": "Yücelik 3",
-
-        "Olumsuzluk 1": "Ölümsüzlük 1",
-        "Olumsuzluk 2": "Ölümsüzlük 2",
-        "Olumsuzluk 3": "Ölümsüzlük 3"
+        "GÃ¼mÃ¼ÅŸ 1": "Gümüş 1", "GÃ¼mÃ¼ÅŸ 2": "Gümüş 2", "GÃ¼mÃ¼ÅŸ 3": "Gümüş 3",
+        "AltÄ±n 1": "Altın 1", "AltÄ±n 2": "Altın 2", "AltÄ±n 3": "Altın 3",
+        "YÃ¼celik 1": "Yücelik 1", "YÃ¼celik 2": "Yücelik 2", "YÃ¼celik 3": "Yücelik 3",
+        "Ã–lÃ¼msÃ¼zlÃ¼k 1": "Ölümsüzlük 1", "Ã–lÃ¼msÃ¼zlÃ¼k 2": "Ölümsüzlük 2", "Ã–lÃ¼msÃ¼zlÃ¼k 3": "Ölümsüzlük 3"
     };
-
-    if (brokenMap[value]) {
-        value = brokenMap[value];
-    }
-
+    if (brokenMap[value]) value = brokenMap[value];
     const lowerValue = value.toLocaleLowerCase("tr-TR");
-
-    const matchedRank = RANK_ORDER.find(
-        rank =>
-            rank.toLocaleLowerCase("tr-TR") ===
-            lowerValue
-    );
-
-    return matchedRank || value;
+    return RANK_ORDER.find(r => r.toLocaleLowerCase("tr-TR") === lowerValue) || value;
 }
 
 function getRankIndex(rank) {
-    const normalized = normalizeRank(rank);
-    return RANK_ORDER.indexOf(normalized);
+    return RANK_ORDER.indexOf(normalizeRank(rank));
 }
 
 function isRankCompatible(rank1, rank2) {
-    const index1 = getRankIndex(rank1);
-    const index2 = getRankIndex(rank2);
-
-    if (index1 === -1 || index2 === -1) {
-        return false;
-    }
-
-    return Math.abs(index1 - index2) <= 1;
-}
-
-function getCompatibleRanks(rank) {
-    const index = getRankIndex(rank);
-
-    if (index === -1) {
-        return [];
-    }
-
-    return RANK_ORDER.filter(
-        (_, i) =>
-            Math.abs(i - index) <= 1
-    );
+    const i1 = getRankIndex(rank1);
+    const i2 = getRankIndex(rank2);
+    if (i1 === -1 || i2 === -1) return false;
+    return Math.abs(i1 - i2) <= 1;
 }
 
 function cleanString(value, maxLength = 255) {
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-    return String(value)
-        .trim()
-        .slice(0, maxLength);
+    if (!value) return "";
+    return String(value).trim().slice(0, maxLength);
 }
 
 function isValidUserId(value) {
-    const number = Number(value);
-    return Number.isInteger(number) && number > 0;
-}
-
-function safeNumber(value, defaultValue = 0, min = 0, max = 1000) {
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
-        return defaultValue;
-    }
-
-    return Math.max(min, Math.min(max, number));
+    const n = Number(value);
+    return Number.isInteger(n) && n > 0;
 }
 
 /*
 =====================================================
-  AUTH
+  AUTH MIDDLEWARE
 =====================================================
 */
 
 function authenticateToken(req, res, next) {
-    try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({
-                success: false,
-                message: "Giriş yapmanız gerekiyor."
-            });
-        }
-
-        const token = authHeader.substring(7).trim();
-
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: "Geçersiz oturum."
-            });
-        }
-
-        jwt.verify(token, JWT_SECRET, (error, user) => {
-            if (error) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Oturum geçersiz veya süresi dolmuş."
-                });
-            }
-
-            if (!user || !isValidUserId(user.id)) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Geçersiz kullanıcı oturumu."
-                });
-            }
-
-            req.user = user;
-            next();
-        });
-    } catch (error) {
-        return res.status(403).json({
-            success: false,
-            message: "Oturum doğrulanamadı."
-        });
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ success: false, message: "Giriş yapmanız gerekiyor." });
     }
+    const token = authHeader.substring(7).trim();
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ success: false, message: "Oturum geçersiz." });
+        req.user = user;
+        next();
+    });
 }
 
 function getUserById(userId) {
-    const user = db.prepare(`
-        SELECT id, username, valorant_id, rank, role, created_at
-        FROM users
-        WHERE id = ?
-    `).get(userId);
-
-    if (!user) {
-        return null;
-    }
-
+    const user = db.prepare(`SELECT id, username, valorant_id, rank, role, created_at FROM users WHERE id = ?`).get(userId);
+    if (!user) return null;
     user.rank = normalizeRank(user.rank);
     return user;
 }
 
-function getLastFiveRankedMatches(userId) {
-    return db.prepare(`
-        SELECT id, result, agent, map, kills, deaths, assists, rr_change, played_at
-        FROM rank_matches
-        WHERE user_id = ?
-        ORDER BY datetime(played_at) DESC, id DESC
-        LIMIT 5
-    `).all(userId);
-}
-
-function getPlayerWithMatches(userId) {
-    const user = getUserById(userId);
-
-    if (!user) {
-        return null;
-    }
-
-    return {
-        id: user.id,
-        username: user.username,
-        valorant_id: user.valorant_id,
-        rank: user.rank,
-        role: user.role,
-        ranked_matches: getLastFiveRankedMatches(user.id)
-    };
-}
-
-function getRoomRemainingSeconds(createdAt) {
-    if (!createdAt) {
-        return 0;
-    }
-
-    const createdTime = Date.parse(String(createdAt).replace(" ", "T") + "Z");
-
-    if (!Number.isFinite(createdTime)) {
-        return 0;
-    }
-
-    const elapsed = Math.floor((Date.now() - createdTime) / 1000);
-
-    return Math.max(0, ROOM_LIFETIME_SECONDS - elapsed);
-}
-
-function cleanupExpiredRooms() {
-    try {
-        const rooms = db.prepare(`SELECT id, created_at FROM rooms`).all();
-        const deleteRoom = db.prepare(`DELETE FROM rooms WHERE id = ?`);
-
-        for (const room of rooms) {
-            if (getRoomRemainingSeconds(room.created_at) <= 0) {
-                deleteRoom.run(room.id);
-            }
-        }
-    } catch (error) {
-        console.error("ROOM CLEANUP ERROR:", error);
-    }
-}
-
-setInterval(cleanupExpiredRooms, 5000);
-
 /*
 =====================================================
-  ROUTING / ENDPOINTS
+  API ENDPOINTS
 =====================================================
 */
 
 app.get("/api/test", (req, res) => {
-    res.json({
-        success: true,
-        message: "5liTakim backend çalışıyor!"
-    });
+    res.json({ success: true, message: "5liTakim backend çalışıyor!" });
 });
 
 app.post("/api/register", async (req, res) => {
     try {
         const { username, valorant_id, rank, role, password } = req.body || {};
-        const usernameClean = cleanString(username, 30);
-        const valorantIdClean = cleanString(valorant_id, 50);
-        const cleanRank = normalizeRank(rank);
-        const cleanRole = cleanString(role, 30);
+        const uClean = cleanString(username, 30);
+        const vClean = cleanString(valorant_id, 50);
+        const rClean = normalizeRank(rank);
+        const roleClean = cleanString(role, 30);
 
-        if (!usernameClean || !valorantIdClean || !cleanRank || !cleanRole || !password) {
+        if (!uClean || !vClean || !rClean || !roleClean || !password) {
             return res.status(400).json({ success: false, message: "Tüm alanları doldurun." });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
+        const hashed = await bcrypt.hash(password, 10);
         const result = db.prepare(`
             INSERT INTO users (username, valorant_id, rank, role, password)
             VALUES (?, ?, ?, ?, ?)
-        `).run(usernameClean, valorantIdClean, cleanRank, cleanRole, hashedPassword);
+        `).run(uClean, vClean, rClean, roleClean, hashed);
 
         return res.status(201).json({ success: true, message: "Kayıt başarılı!", userId: result.lastInsertRowid });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    } catch (e) {
+        return res.status(500).json({ success: false, message: "Sunucu hatası veya kullanıcı adı kullanımda." });
     }
 });
 
 app.post("/api/login", async (req, res) => {
     try {
         const { username, password } = req.body || {};
-        const usernameClean = cleanString(username, 30);
-
-        const user = db.prepare(`SELECT * FROM users WHERE LOWER(username) = LOWER(?)`).get(usernameClean);
+        const uClean = cleanString(username, 30);
+        const user = db.prepare(`SELECT * FROM users WHERE LOWER(username) = LOWER(?)`).get(uClean);
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ success: false, message: "Kullanıcı adı veya şifre yanlış." });
         }
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
-
         return res.json({
             success: true,
             token,
@@ -471,21 +256,29 @@ app.post("/api/login", async (req, res) => {
                 role: user.role
             }
         });
-    } catch (error) {
+    } catch (e) {
         return res.status(500).json({ success: false, message: "Sunucu hatası." });
     }
 });
 
 app.get("/api/profile", authenticateToken, (req, res) => {
     const user = getUserById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı." });
+    if (!user) return res.status(404).json({ success: false, message: "Bulunamadı." });
     res.json({ success: true, user });
 });
 
 app.get("/api/rooms", authenticateToken, (req, res) => {
-    cleanupExpiredRooms();
     const rooms = db.prepare(`SELECT rooms.*, users.username, users.valorant_id FROM rooms INNER JOIN users ON rooms.user_id = users.id`).all();
     res.json({ success: true, rooms });
+});
+
+/*
+=====================================================
+  ANA SAYFA YÖNLENDİRMESİ (Cannot GET / Çözümü)
+=====================================================
+*/
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../index.html"));
 });
 
 /*
@@ -493,7 +286,6 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
   SUNUCUYU BAŞLAT
 =====================================================
 */
-
 app.listen(PORT, () => {
     console.log(`Sunucu aktif: http://localhost:${PORT}`);
 });
