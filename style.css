@@ -349,4 +349,400 @@ footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; bor
     .form-card {
         padding: 20px !important;
     }
+}.bottom-auth-bar {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}* { box-sizing: border-box; }
+body { margin: 0; background: #0b0d12; color: #f4f5f7; font-family: Inter, Arial, sans-serif; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+.primary { background: #a855f7; color: white; border: 0; border-radius: 8px; padding: 13px 20px; font-weight: 800; transition: 0.2s; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+.primary:hover { filter: brightness(1.1); }
+.secondary { background: #191d25; color: #f4f5f7; border: 1px solid #303642; border-radius: 8px; padding: 12px 18px; font-weight: 700; transition: 0.2s; }
+.small { padding: 9px 14px; }
+
+.page { display: none; max-width: 1180px; margin: 0 auto; padding: 70px 28px; min-height: calc(100vh - 125px); }
+.page.active { display: block !important; }
+#page-home { padding: 0 !important; max-width: 100% !important; }
+
+/* =====================================================
+   ARKADA TAM EKRAN OYNAYAN GIF VE HERO ALANI
+===================================================== */
+.gankster-hero-container {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    background: #090b10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
+
+.hero-bg-gif {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    z-index: 1 !important;
+    opacity: 0.50 !important;
+}
+
+.gankster-dark-overlay {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;
+    background: radial-gradient(circle at 50% 50%, rgba(9, 11, 16, 0.6) 0%, rgba(9, 11, 16, 0.92) 100%) !important;
+    z-index: 2 !important;
+}
+
+.gankster-hero-content {
+    position: relative !important;
+    z-index: 3 !important;
+    text-align: center !important;
+    max-width: 750px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+/* Logo Boyutu 2 Kat Büyütüldü (Örn: 80px -> 160px) */
+.hero-top-logo-area {
+    margin-bottom: 20px !important;
+    cursor: pointer !important;
+}
+.hero-main-logo-img {
+    height: 160px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 0 35px rgba(168, 85, 247, 0.8)) !important;
+    transition: transform 0.3s ease;
+}
+.hero-main-logo-img:hover {
+    transform: scale(1.05);
+}
+
+.valorant-pill-badge {
+    background: rgba(168, 85, 247, 0.15) !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+    padding: 8px 18px !important;
+    border-radius: 30px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    color: #e9d5ff !important;
+    margin-bottom: 15px !important;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2) !important;
+}
+
+.gankster-title {
+    font-size: 52px !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+    line-height: 1.15 !important;
+    margin-bottom: 15px !important;
+    letter-spacing: -1px !important;
+}
+
+.highlight-neon {
+    color: #a855f7 !important;
+    text-shadow: 0 0 35px rgba(168, 85, 247, 0.6) !important;
+}
+
+.gankster-desc {
+    color: #94a3b8 !important;
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 25px !important;
+    max-width: 480px !important;
+}
+
+/* Şekilli Şukullu Ajanlar Şeridi */
+.agents-showcase-bar {
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-bottom: 25px !important;
+    flex-wrap: wrap !important;
+    max-width: 700px !important;
+}
+
+.agent-frame {
+    width: 65px !important;
+    height: 65px !important;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(20, 25, 35, 0.8) 100%) !important;
+    border: 2px solid rgba(168, 85, 247, 0.5) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.agent-frame img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transition: transform 0.3s ease !important;
+}
+
+.agent-frame:hover {
+    transform: translateY(-6px) scale(1.1) !important;
+    border-color: #c084fc !important;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.8) !important;
+}
+
+.agent-frame:hover img {
+    transform: scale(1.15) !important;
+}
+
+.gankster-action-buttons {
+    display: flex !important;
+    gap: 15px !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+.gankster-main-btn {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea) !important;
+    color: #fff !important;
+    padding: 14px 28px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+.gankster-main-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 0 35px rgba(168, 85, 247, 0.7) !important;
+}
+
+.gankster-sec-btn {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    padding: 14px 28px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: 0.2s !important;
+}
+.gankster-sec-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(168, 85, 247, 0.5);
+    transform: translateY(-2px);
+}
+
+.bottom-auth-bar {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+/* Diğer Sayfalar */
+.section-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 30px; }
+.section-head h2 { font-size: 40px; margin: 8px 0; }
+.filters { display: flex; gap: 10px; margin-bottom: 20px; }
+.filters select { background: #171b23; border: 1px solid #303642; color: #e7e9ed; padding: 12px; border-radius: 8px; width: 100%; }
+.rooms { display: grid; gap: 14px; }
+.room { background: #11151d; border: 1px solid #262c37; border-radius: 16px; padding: 22px; }
+.room-top, .room-bottom { display: flex; justify-content: space-between; align-items: center; }
+.badge { font-size: 10px; font-weight: 900; padding: 7px 9px; border-radius: 5px; background: #1c222c; color: #b9c0cb; }
+.badge.red { background: #3a1820; color: #ff6b78; }
+.form-card { max-width: 800px; margin: auto; padding: 34px; background: #11151d; border: 1px solid #262c37; border-radius: 16px; }
+.form-card.narrow { max-width: 500px; }
+.form-card label { display: block; color: #b8bec9; font-size: 13px; font-weight: 700; margin: 16px 0; }
+.form-card input, .form-card select, .form-card textarea { display: block; width: 100%; margin-top: 8px; background: #171b23; border: 1px solid #303642; color: #f4f5f7; border-radius: 8px; padding: 13px; }
+.form-card textarea { min-height: 110px; resize: vertical; }
+.check { display: flex !important; align-items: center; gap: 8px; }
+.check input { width: auto !important; margin: 0 !important; }
+.wide { width: 100%; margin-top: 12px; }
+.center { text-align: center; }
+footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; border-top: 1px solid #20252e; }
+
+.match-badge { display: inline-block; padding: 2px 6px; font-size: 12px; font-weight: bold; border-radius: 4px; margin-right: 3px; color: #fff; }
+.match-green { background-color: #22c55e; }
+.match-yellow { background-color: #eab308; }
+.match-red { background-color: #ef4444; }.gankster-title {
+    font-size: 52px !important; /* Normal boyuta geri döndürüldü */
+    font-weight: 900 !important;
+    color: #fff !important;
+    line-height: 1.15 !important;
+    margin-bottom: 15px !important;
+    letter-spacing: -1px !important;
+    text-transform: uppercase !important; /* Tüm harfleri büyük yapar */
+}/* Başlık Satırları İçin Temel Yapı ve Sıralı Animasyon */
+.gankster-title {
+    font-size: 52px !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 15px !important;
+    letter-spacing: -1px !important;
+    text-transform: uppercase !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.title-line {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: textAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 1. Satır: TAKIMINI BUL! (Beyaz) */
+.title-line.line-1 {
+    color: #fff !important;
+    animation-delay: 0.2s;
+}
+
+/* 2. Satır: OYUNA GİR! (Mor Neon) */
+.title-line.line-2 {
+    color: #a855f7 !important;
+    text-shadow: 0 0 35px rgba(168, 85, 247, 0.6) !important;
+    animation-delay: 0.5s;
+}
+
+/* 3. Satır: KEYİFLE KAZAN! (Mor Neon) */
+.title-line.line-3 {
+    color: #a855f7 !important;
+    text-shadow: 0 0 35px rgba(168, 85, 247, 0.6) !important;
+    animation-delay: 0.8s;
+}
+
+@keyframes textAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(25px);
+        filter: blur(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}/* SMOKGG YouTube Özel Bölüm (Giriş/Kayıt Altı) */
+.smokgg-hero-showcase {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.smokgg-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(168, 85, 247, 0.05);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    padding: 14px 25px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Logo 3 Kat Daha Küçültüldü (Yaklaşık 12-13px yükseklik) */
+.smokgg-badge-img {
+    height: 13px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5));
+    transition: transform 0.3s ease;
+}
+
+.smokgg-badge-img:hover {
+    transform: scale(1.1);
+}
+
+.smokgg-footer-text {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    margin: 0;
+    text-align: center;
+}
+
+.smokgg-footer-text strong {
+    color: #a855f7;
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}/* SMOKGG YouTube Özel Bölüm (Giriş/Kayıt Altı) */
+.smokgg-hero-showcase {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.smokgg-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: rgba(168, 85, 247, 0.05);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    padding: 16px 25px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Logo 5 Kat Büyütüldü (Yükseklik ~65px) */
+.smokgg-badge-img {
+    height: 65px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
+    transition: transform 0.3s ease;
+}
+
+.smokgg-badge-img:hover {
+    transform: scale(1.05);
+}
+
+.smokgg-footer-text {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    margin: 0;
+    text-align: center;
+}
+
+.smokgg-footer-text strong {
+    color: #a855f7;
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}<!-- SMOKGG YouTube Özel Bölümü (Tıklanabilir Linkler ile) -->
+                <div class="smokgg-hero-showcase">
+                    <div class="smokgg-container">
+                        <a href="https://www.youtube.com/@SmokGG01" target="_blank" style="display: inline-block; text-decoration: none;">
+                            <img src="images/youtube.png" alt="SMOKGG Logo" class="smokgg-badge-img">
+                        </a>
+                        <p class="smokgg-footer-text">
+                            Bu uygulama 
+                            <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a> 
+                            YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
+                        </p>
+                    </div>
+                </div>
