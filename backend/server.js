@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, "../")));
 const db = new Database(path.join(__dirname, "5litakim.db"));
 db.pragma("foreign_keys = ON");
 
-/* TABLOLAR */
+/* TABLOLAR VE OTOMATİK SÜTUN GÜNCELLEMESİ */
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     age TEXT NOT NULL,
     microphone INTEGER DEFAULT 1,
     description TEXT,
-    agents TEXT, -- 9:16 Ajan fotoğrafları (JSON array veya virgüllü string)
+    agents TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -54,6 +54,13 @@ CREATE TABLE IF NOT EXISTS rank_matches (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `);
+
+// 'agents' sütunu eski tablolarda yoksa ekle (Hata almamak için güvenlik önlemi)
+try {
+    db.exec(`ALTER TABLE rooms ADD COLUMN agents TEXT;`);
+} catch (e) {
+    // Sütun zaten varsa yoksay
+}
 
 function getUserMatches(userId) {
     const matches = db.prepare(`SELECT result FROM rank_matches WHERE user_id = ? ORDER BY id DESC LIMIT 5`).all(userId);
@@ -99,6 +106,7 @@ app.post("/api/register", async (req, res) => {
 
         return res.status(201).json({ success: true, message: "Kayıt başarılı!" });
     } catch (err) {
+        console.error("REGISTER ERROR:", err);
         return res.status(500).json({ success: false, message: "Sunucu hatası: " + err.message });
     }
 });
@@ -208,7 +216,7 @@ app.post("/api/rooms", authenticateToken, (req, res) => {
         
         db.prepare(`DELETE FROM rooms WHERE user_id = ?`).run(req.user.id);
 
-        const agentsJson = agents ? JSON.stringify(agents) : JSON.stringify(["jett"]);
+        const agentsJson = agents ? JSON.stringify(agents) : JSON.stringify([]);
 
         const result = db.prepare(`
             INSERT INTO rooms (user_id, rank, role, mode, age, microphone, description, agents)
