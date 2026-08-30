@@ -56,6 +56,8 @@
                 <div class="bottom-auth-bar" id="user-menu" style="display:none; align-items:center; gap:15px; margin-top:25px;">
                     <span id="topbar-username" style="font-weight:700; color:#a855f7;"></span>
                     <button class="secondary small" onclick="switchPage('profile')">Profilim</button>
+                    <!-- Admin Butonu Sadece Admin Giriş Yapınca Görünecek -->
+                    <button class="primary small" id="admin-panel-btn" onclick="switchPage('admin')" style="display:none; background: linear-gradient(135deg, #ef4444, #b91c1c);">Admin Paneli</button>
                     <button class="secondary small" onclick="logout()">Çıkış Yap</button>
                 </div>
 
@@ -118,9 +120,7 @@
                 <form id="room-form" onsubmit="createRoom(event)">
                     
                     <label>Ajan Seçimi (En Fazla 3 Ajan Seçin veya Farketmez)</label>
-                    <div class="agent-picker-grid" id="agent-picker-container">
-                        <!-- JS ile doldurulacak -->
-                    </div>
+                    <div class="agent-picker-grid" id="agent-picker-container"></div>
                     <input type="hidden" name="selected_agents" id="selected-agents-input">
 
                     <label>Oyun Modu</label>
@@ -261,6 +261,32 @@
                     <input type="password" name="password" required>
                     <button type="submit" class="primary wide">Hesap Oluştur</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. ADMIN PANELİ SAYFASI -->
+    <div class="page" id="page-admin">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="color: #ef4444; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 10px;">🛡️ Yönetici (Admin) Paneli</h2>
+                
+                <div style="margin-top: 25px;">
+                    <h3>Aktif İlanlar Yönetimi</h3>
+                    <p class="muted">Sitede yayınlanan ilanları denetleyebilir ve silebilirsin.</p>
+                    <div id="admin-rooms-list" style="margin-top: 15px;"></div>
+                </div>
+
+                <div style="margin-top: 40px;">
+                    <h3>Kayıtlı Kullanıcılar</h3>
+                    <p class="muted">Sisteme kayıtlı olan üyeleri görüntüleyebilirsin.</p>
+                    <div id="admin-users-list" style="margin-top: 15px;"></div>
+                </div>
             </div>
         </div>
     </div>

@@ -1,5 +1,14 @@
 // Sayfa Değiştirme Fonksiyonu
 function switchPage(pageId) {
+    if (pageId === 'admin') {
+        const loggedUser = localStorage.getItem('valotakim_logged');
+        if (loggedUser !== 'admin') {
+            alert('Bu sayfaya sadece admin yetkilisi erişebilir!');
+            return;
+        }
+        loadAdminData();
+    }
+
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
@@ -41,10 +50,19 @@ function loginUser(event) {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
     
+    // Varsayılan admin hesabı kontrolü
+    if(data.username === "admin" && data.password === "admin123") {
+        localStorage.setItem('valotakim_logged', 'admin');
+        checkAuthState();
+        switchPage('home');
+        alert('Admin olarak giriş yapıldı!');
+        return;
+    }
+    
     let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
     let found = users.find(u => u.username === data.username && u.password === data.password);
     
-    if(found || data.username === "admin") {
+    if(found) {
         localStorage.setItem('valotakim_logged', data.username);
         checkAuthState();
         switchPage('home');
@@ -62,17 +80,25 @@ function logout() {
     alert('Çıkış yapıldı.');
 }
 
-// Kullanıcı Durumunu Kontrol Etme
+// Kullanıcı Durumunu ve Admin Butonunu Kontrol Etme
 function checkAuthState() {
     const loggedUser = localStorage.getItem('valotakim_logged');
     const authButtons = document.getElementById('auth-buttons');
     const userMenu = document.getElementById('user-menu');
     const usernameSpan = document.getElementById('topbar-username');
+    const adminBtn = document.getElementById('admin-panel-btn');
 
     if (loggedUser) {
         if (authButtons) authButtons.style.display = 'none';
         if (userMenu) userMenu.style.display = 'flex';
         if (usernameSpan) usernameSpan.textContent = loggedUser;
+        
+        // Eğer giriş yapan admin ise admin panel butonunu göster
+        if (loggedUser === 'admin') {
+            if (adminBtn) adminBtn.style.display = 'inline-block';
+        } else {
+            if (adminBtn) adminBtn.style.display = 'none';
+        }
     } else {
         if (authButtons) authButtons.style.display = 'flex';
         if (userMenu) userMenu.style.display = 'none';
@@ -92,7 +118,7 @@ function checkAuthAndOpenCreateRoom() {
 // Profil Verilerini Yükleme
 function loadProfileData() {
     const loggedUser = localStorage.getItem('valotakim_logged');
-    if (!loggedUser) return;
+    if (!loggedUser || loggedUser === 'admin') return;
     let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
     let user = users.find(u => u.username === loggedUser);
     if(user) {
@@ -136,7 +162,6 @@ function initAgentPicker() {
     
     let html = '';
     
-    // Özel "Farketmez" Kutusu
     html += `
         <div class="agent-pick-box farketmez-box" id="agent-box-farketmez" onclick="toggleFarketmez()">
             <span class="farketmez-text">FARKETMEZ</span>
@@ -144,7 +169,6 @@ function initAgentPicker() {
         </div>
     `;
 
-    // 26 Ajan Kutusu
     for(let i=1; i<=26; i++) {
         let name = agentNames[i-1] || `AJAN ${i}`;
         html += `
@@ -230,6 +254,7 @@ function createRoom(event) {
     let userRank = user ? user.rank : 'Gümüş 1';
 
     const newRoom = {
+        id: Date.now(),
         user: loggedUser,
         rank: userRank,
         mode: formData.get('mode'),
@@ -255,55 +280,107 @@ function loadRooms() {
     
     let rooms = JSON.parse(localStorage.getItem('valotakim_rooms') || '[]');
     
+    let html = '';
     if(rooms.length === 0) {
-        rooms = [
-            {
-                user: "SmokGG",
-                rank: "Gümüş 2",
-                mode: "Dereceli",
-                age: "18+",
-                microphone: "Mikrofon Var",
-                description: "Takımımıza uyumlu oyuncu arıyoruz.",
-                agents: [1, 4, 6]
+        html = `<p class="muted" style="text-align:center; padding:20px;">Henüz aktif ilan bulunmuyor.</p>`;
+    } else {
+        rooms.forEach((room) => {
+            let agentImgs = '';
+            if(room.agents.includes('farketmez')) {
+                agentImgs = `<span class="badge" style="background:#a855f7; color:#fff;">FARKETMEZ</span>`;
+            } else {
+                agentImgs = room.agents.map(aId => `<img src="images/agent${aId}.png" class="mini-agent-img" onerror="this.src='images/logo.png'">`).join('');
             }
-        ];
-        localStorage.setItem('valotakim_rooms', JSON.stringify(rooms));
+            
+            html += `
+                <div class="room-card-custom">
+                    <div class="room-left-info">
+                        <div class="room-user-avatar">
+                            <img src="images/logo.png" alt="Logo">
+                        </div>
+                        <div>
+                            <span class="room-username-txt">${room.user}</span>
+                            <span class="room-rank-txt">Rank: ${room.rank}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="room-middle-agents">
+                        ${agentImgs}
+                    </div>
+
+                    <div class="room-right-action">
+                        <span class="badge red">${room.mode}</span>
+                        <button class="primary small" onclick="alert('${room.user} adlı kullanıcının odasına katılma isteği gönderildi!')">Odaya Katıl</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    roomsList.innerHTML = html;
+}
+
+// ADMIN PANELİ VERİLERİNİ YÜKLEME VE SİLME FONKSİYONLARI
+function loadAdminData() {
+    // İlanlar
+    const adminRoomsList = document.getElementById('admin-rooms-list');
+    let rooms = JSON.parse(localStorage.getItem('valotakim_rooms') || '[]');
+    if(adminRoomsList) {
+        if(rooms.length === 0) {
+            adminRoomsList.innerHTML = `<p class="muted">Hiç ilan yok.</p>`;
+        } else {
+            let html = '';
+            rooms.forEach(room => {
+                html += `
+                    <div class="room-card-custom" style="margin-bottom: 10px; padding: 10px 15px;">
+                        <div>
+                            <strong>${room.user}</strong> (${room.mode}) - Rank: ${room.rank}
+                            <p class="muted" style="margin: 2px 0 0 0; font-size:12px;">Not: ${room.description || 'Yok'}</p>
+                        </div>
+                        <button class="primary small" style="background: #ef4444;" onclick="adminDeleteRoom(${room.id})">İlanı Kaldır</button>
+                    </div>
+                `;
+            });
+            adminRoomsList.innerHTML = html;
+        }
     }
 
-    let html = '';
-    rooms.forEach((room) => {
-        let agentImgs = '';
-        if(room.agents.includes('farketmez')) {
-            agentImgs = `<span class="badge" style="background:#a855f7; color:#fff;">FARKETMEZ</span>`;
+    // Kullanıcılar
+    const adminUsersList = document.getElementById('admin-users-list');
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    if(adminUsersList) {
+        if(users.length === 0) {
+            adminUsersList.innerHTML = `<p class="muted">Kayıtlı normal kullanıcı yok.</p>`;
         } else {
-            agentImgs = room.agents.map(aId => `<img src="images/agent${aId}.png" class="mini-agent-img" onerror="this.src='images/logo.png'">`).join('');
+            let html = '';
+            users.forEach((u, index) => {
+                html += `
+                    <div class="room-card-custom" style="margin-bottom: 10px; padding: 10px 15px;">
+                        <div>
+                            <strong>${u.username}</strong> - Rank: ${u.rank} | Valorant ID: ${u.valorant_id}
+                        </div>
+                        <button class="primary small" style="background: #ef4444;" onclick="adminDeleteUser(${index})">Üyeyi Sil</button>
+                    </div>
+                `;
+            });
+            adminUsersList.innerHTML = html;
         }
-        
-        html += `
-            <div class="room-card-custom">
-                <div class="room-left-info">
-                    <div class="room-user-avatar">
-                        <img src="images/logo.png" alt="Logo">
-                    </div>
-                    <div>
-                        <span class="room-username-txt">${room.user}</span>
-                        <span class="room-rank-txt">Rank: ${room.rank}</span>
-                    </div>
-                </div>
-                
-                <div class="room-middle-agents">
-                    ${agentImgs}
-                </div>
+    }
+}
 
-                <div class="room-right-action">
-                    <span class="badge red">${room.mode}</span>
-                    <button class="primary small" onclick="alert('${room.user} adlı kullanıcının odasına katılma isteği gönderildi!')">Odaya Katıl</button>
-                </div>
-            </div>
-        `;
-    });
-    
-    roomsList.innerHTML = html;
+function adminDeleteRoom(roomId) {
+    let rooms = JSON.parse(localStorage.getItem('valotakim_rooms') || '[]');
+    rooms = rooms.filter(r => r.id !== roomId);
+    localStorage.setItem('valotakim_rooms', JSON.stringify(rooms));
+    loadAdminData();
+    alert('İlan kaldırıldı.');
+}
+
+function adminDeleteUser(userIndex) {
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    users.splice(userIndex, 1);
+    localStorage.setItem('valotakim_users', JSON.stringify(users));
+    loadAdminData();
+    alert('Kullanıcı silindi.');
 }
 
 // Rank Sıralaması Listesi
@@ -319,7 +396,7 @@ const rankList = [
     "Radiant"
 ];
 
-// 5'li Takım Bul (Rank Aralığı Filtrelemesi)
+// 5'li Takım Bul
 function loadMatchmaking() {
     const results = document.getElementById('matchmaking-results');
     if (!results) return;
