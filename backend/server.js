@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS room_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER NOT NULL,
     requester_id INTEGER NOT NULL,
-    status TEXT DEFAULT 'pending', -- pending, accepted, rejected
+    status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE TABLE IF NOT EXISTS rank_matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    result TEXT NOT NULL, -- G (Galibiyet), B (Beraberlik), M (Mağlubiyet)
+    result TEXT NOT NULL,
     agent TEXT,
     map TEXT,
     played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
