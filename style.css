@@ -1,216 +1,199 @@
-*{box-sizing:border-box}body{margin:0;background:#0b0d12;color:#f4f5f7;font-family:Inter,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.topbar{height:72px;border-bottom:1px solid #242832;background:#0d1016;display:flex;align-items:center;padding:0 5%;gap:28px}.logo{font-size:22px;font-weight:900;letter-spacing:1px}.logo span{color:#ff4655}.topbar nav{display:flex;gap:8px;flex:1}.topbar nav button,.ghost{background:transparent;color:#aeb4c0;border:0;padding:10px 12px}.primary{background:#ff4655;color:white;border:0;border-radius:8px;padding:13px 20px;font-weight:800}.primary:hover{filter:brightness(1.1)}.secondary{background:#191d25;color:#f4f5f7;border:1px solid #303642;border-radius:8px;padding:12px 18px;font-weight:700}.small{padding:9px 14px}.page{display:none;max-width:1180px;margin:0 auto;padding:70px 28px;min-height:calc(100vh - 125px)}.page.active{display:block}.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:60px;align-items:center;min-height:70vh}.eyebrow{color:#ff5967;font-size:12px;font-weight:900;letter-spacing:2px}.hero h1{font-size:70px;line-height:.98;margin:15px 0 25px}.hero h1 span{color:#ff4655}.muted{color:#9299a7;line-height:1.7}.hero-buttons{display:flex;gap:12px;margin-top:30px}.hero-card,.form-card,.room,.chat,.team{background:#11151d;border:1px solid #262c37;border-radius:16px}.hero-card{padding:30px}.status{color:#aeb4c0;font-size:13px}.status i{display:inline-block;width:8px;height:8px;background:#44d17a;border-radius:50%;margin-right:7px}.mini-team{display:flex;flex-wrap:wrap;gap:8px;margin-top:25px}.mini-team span,.badge{font-size:10px;font-weight:900;padding:7px 9px;border-radius:5px;background:#1c222c;color:#b9c0cb}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:30px}.section-head h2,.form-card h2{font-size:40px;margin:8px 0}.filters{display:flex;gap:10px;margin-bottom:20px}.filters select,.grid2 select,.grid2 input{background:#171b23;border:1px solid #303642;color:#e7e9ed;padding:12px;border-radius:8px;width:100%}.rooms{display:grid;gap:14px}.room{padding:22px}.room-top,.room-bottom{display:flex;justify-content:space-between;align-items:center}.badge.red{background:#3a1820;color:#ff6b78}.players{font-weight:800}.room h3{margin-bottom:7px}.room p{color:#858d9b}.room-bottom{margin-top:18px;color:#858d9b;font-size:13px}.form-card{max-width:800px;margin:auto;padding:34px}.form-card.narrow{max-width:500px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.form-card label{display:block;color:#b8bec9;font-size:13px;font-weight:700;margin:16px 0}.form-card input,.form-card select,.form-card textarea{display:block;width:100%;margin-top:8px;background:#171b23;border:1px solid #303642;color:#f4f5f7;border-radius:8px;padding:13px}.form-card textarea{min-height:110px;resize:vertical}.check{display:flex!important;align-items:center;gap:8px}.check input{width:auto!important;margin:0!important}.wide{width:100%;margin-top:12px}.center{text-align:center}.link{background:none;border:0;color:#ff5967}.match-status{text-align:center;margin-top:18px;color:#ff8b95;min-height:24px}.chat-layout{display:grid;grid-template-columns:1fr 310px;gap:18px}.chat{display:flex;flex-direction:column;min-height:620px}.chat-head{padding:20px;border-bottom:1px solid #282e39;display:flex;justify-content:space-between;align-items:center}.chat-head h2{margin:8px 0 0;font-size:18px}.messages{flex:1;padding:20px}.messages div{margin-bottom:16px}.messages b{display:block;color:#ff6470;font-size:13px}.messages span{color:#d0d4db;font-size:14px}.message-box{display:flex;gap:8px;padding:14px;border-top:1px solid #282e39}.message-box input{flex:1;background:#171b23;border:1px solid #303642;color:white;border-radius:8px;padding:12px}.team{padding:20px}.team h3{margin-top:0}.member{padding:14px 0;border-bottom:1px solid #262c37}.member b,.member small,.member em{display:block}.member small{color:#8e96a5;margin-top:5px}.member em{font-style:normal;color:#ff8790;font-size:11px;margin-top:6px}footer{text-align:center;color:#666e7b;font-size:12px;padding:20px;border-top:1px solid #20252e}@media(max-width:800px){.topbar nav{display:none}.hero{grid-template-columns:1fr}.hero h1{font-size:48px}.grid2,.chat-layout{grid-template-columns:1fr}.team{order:-1}.section-head{align-items:start;gap:15px;flex-direction:column}}
-.match-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 4px;
-    margin-right: 3px;
-    color: #fff;
-}
-.match-green { background-color: #22c55e; } /* G - Yeşil */
-.match-yellow { background-color: #eab308; } /* B - Sarı */
-.match-red { background-color: #ef4444; } /* M - Kırmızı */
-
-/* Valorant Tema Genel Kapsayıcı */
+/* =====================================================
+   VALORANT ANA SAYFA & CAM TEMA (GLASSMORPHISM)
+===================================================== */
 .valorant-hero-container {
-    position: relative;
-    width: 100%;
-    min-height: calc(100vh - 80px);
-    background: #0f1923 url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920&auto=format&fit=crop') no-repeat center center/cover;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    box-sizing: border-box;
+    position: relative !important;
+    width: 100% !important;
+    min-height: calc(100vh - 72px) !important;
+    background: #0f1923 url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920&auto=format&fit=crop') no-repeat center center/cover !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
-/* Arka Plan Karartma Efekti */
 .valorant-bg-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(135deg, rgba(15, 25, 35, 0.95) 0%, rgba(8, 12, 18, 0.85) 100%);
-    z-index: 1;
+    position: absolute !important;
+    top: 0 !important; 
+    left: 0 !important; 
+    width: 100% !important; 
+    height: 100% !important;
+    background: linear-gradient(135deg, rgba(15, 25, 35, 0.94) 0%, rgba(8, 12, 18, 0.88) 100%) !important;
+    z-index: 1 !important;
 }
 
-/* İçerik Düzeni */
 .hero-content-wrapper {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    gap: 30px;
-    max-width: 1200px;
-    width: 100%;
-    align-items: stretch;
-    flex-wrap: wrap;
-    justify-content: center;
+    position: relative !important;
+    z-index: 2 !important;
+    display: flex !important;
+    gap: 30px !important;
+    max-width: 1150px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
 }
 
-/* Buzlu Cam (Glassmorphism) Efekti */
+/* Buzlu Cam Kartlar */
 .glass-card {
-    background: rgba(20, 25, 35, 0.55);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    background: rgba(20, 25, 35, 0.65) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7) !important;
 }
 
-/* Sol Büyük Kart */
 .hero-main-card {
-    flex: 1.6;
-    min-width: 320px;
-    padding: 50px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex: 1.6 !important;
+    min-width: 320px !important;
+    padding: 50px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
 }
 
 .badge-subtitle {
-    color: #ff4655;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    margin-bottom: 15px;
-    display: block;
+    color: #ff4655 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 2px !important;
+    margin-bottom: 15px !important;
+    display: block !important;
 }
 
 .hero-title {
-    font-size: 48px;
-    font-weight: 900;
-    color: #fff;
-    line-height: 1.1;
-    margin-bottom: 20px;
+    font-size: 44px !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+    line-height: 1.15 !important;
+    margin-bottom: 20px !important;
 }
 
 .highlight-red {
-    color: #ff4655;
-    text-shadow: 0 0 25px rgba(255, 70, 85, 0.5);
+    color: #ff4655 !important;
+    text-shadow: 0 0 30px rgba(255, 70, 85, 0.6) !important;
 }
 
 .hero-desc {
-    color: #8b9bb4;
-    font-size: 15px;
-    margin-bottom: 40px;
-    max-width: 450px;
+    color: #8b9bb4 !important;
+    font-size: 14px !important;
+    margin-bottom: 35px !important;
+    max-width: 420px !important;
 }
 
-/* Buton Tasarımları */
 .hero-buttons {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+    display: flex !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
 }
 
 .valorant-btn {
-    padding: 14px 32px;
-    font-weight: 700;
-    font-size: 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: none;
-    letter-spacing: 1px;
+    padding: 14px 28px !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    letter-spacing: 1px !important;
 }
 
 .btn-red-glow {
-    background: #ff4655;
-    color: #fff;
-    box-shadow: 0 0 20px rgba(255, 70, 85, 0.4);
+    background: #ff4655 !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px rgba(255, 70, 85, 0.5) !important;
 }
 
 .btn-red-glow:hover {
-    background: #ff5865;
-    box-shadow: 0 0 30px rgba(255, 70, 85, 0.7);
-    transform: translateY(-2px);
+    background: #ff5865 !important;
+    box-shadow: 0 0 35px rgba(255, 70, 85, 0.8) !important;
+    transform: translateY(-2px) !important;
 }
 
 .btn-dark-glass {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .btn-dark-glass:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 /* Sağ Yan Kart (Hızlı Eşleşme) */
 .hero-sidebar-card {
-    flex: 1;
-    min-width: 280px;
-    padding: 35px;
-    display: flex;
-    flex-direction: column;
+    flex: 1 !important;
+    min-width: 280px !important;
+    padding: 35px !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .system-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #8b9bb4;
-    margin-bottom: 15px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+    color: #8b9bb4 !important;
+    margin-bottom: 15px !important;
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
-    background-color: #2ecc71;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #2ecc71;
+    width: 8px !important;
+    height: 8px !important;
+    background-color: #2ecc71 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 10px #2ecc71 !important;
 }
 
 .hero-sidebar-card h2 {
-    color: #fff;
-    font-size: 22px;
-    margin-bottom: 10px;
+    color: #fff !important;
+    font-size: 20px !important;
+    margin-bottom: 8px !important;
 }
 
 .hero-sidebar-card p {
-    color: #8b9bb4;
-    font-size: 13px;
-    margin-bottom: 25px;
+    color: #8b9bb4 !important;
+    font-size: 13px !important;
+    margin-bottom: 20px !important;
 }
 
-/* Rol Kutuları Grid Yapısı */
 .role-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
 }
 
 .role-box {
-    background: rgba(15, 20, 28, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 14px;
-    border-radius: 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #a0aec0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
+    background: rgba(15, 20, 28, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    color: #a0aec0 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
 .role-box:nth-child(5) {
-    grid-column: span 2;
-}
-
-.role-box .role-icon {
-    font-size: 18px;
+    grid-column: span 2 !important;
 }
 
 .role-box:hover, .role-box.active {
-    background: rgba(255, 70, 85, 0.15);
-    border-color: #ff4655;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(255, 70, 85, 0.2);
+    background: rgba(255, 70, 85, 0.18) !important;
+    border-color: #ff4655 !important;
+    color: #fff !important;
+    box-shadow: 0 0 15px rgba(255, 70, 85, 0.3) !important;
 }
