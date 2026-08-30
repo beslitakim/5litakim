@@ -9,16 +9,16 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "5litakim-gizli-anahtar-2026";
-const ROOM_LIFETIME_SECONDS = 180; // 3 Dakika
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "../")));
 
+// Bellek (:memory:) yerine kalıcı dosya modu kullanıldı ki hesaplar silinmesin!
 const db = new Database(path.join(__dirname, "5litakim.db"));
 db.pragma("foreign_keys = ON");
 
-/* TABLOLAR VE OTOMATİK SÜTUN GÜNCELLEMESİ */
+/* TABLOLAR */
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS rooms (
     age TEXT NOT NULL,
     microphone INTEGER DEFAULT 1,
     description TEXT,
-    agents TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -54,13 +53,6 @@ CREATE TABLE IF NOT EXISTS rank_matches (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `);
-
-// 'agents' sütunu eski tablolarda yoksa ekle (Hata almamak için güvenlik önlemi)
-try {
-    db.exec(`ALTER TABLE rooms ADD COLUMN agents TEXT;`);
-} catch (e) {
-    // Sütun zaten varsa yoksay
-}
 
 function getUserMatches(userId) {
     const matches = db.prepare(`SELECT result FROM rank_matches WHERE user_id = ? ORDER BY id DESC LIMIT 5`).all(userId);
@@ -176,11 +168,6 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
         const user = db.prepare(`SELECT rank FROM users WHERE id = ?`).get(req.user.id);
         const searchRank = user ? user.rank : "Gümüş 1";
 
-        // Süresi dolan (3 dakikayı geçen) ilanları otomatik sil
-        db.prepare(`
-            DELETE FROM rooms WHERE (strftime('%s', 'now') - strftime('%s', created_at)) >= ?
-        `).run(ROOM_LIFETIME_SECONDS);
-
         const rooms = db.prepare(`
             SELECT rooms.*, users.username, users.valorant_id, users.id as owner_id
             FROM rooms 
@@ -188,40 +175,30 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
             ORDER BY rooms.id DESC
         `).all();
 
-        const formattedRooms = rooms.map(room => {
-            const createdAtTime = new Date(room.created_at + "Z").getTime();
-            const elapsedSec = Math.floor((Date.now() - createdAtTime) / 1000);
-            const remaining = Math.max(0, ROOM_LIFETIME_SECONDS - elapsedSec);
-
-            return {
-                ...room,
-                agents: room.agents ? JSON.parse(room.agents) : [],
-                matches: getUserMatches(room.owner_id),
-                remaining_seconds: remaining,
-                max_seconds: ROOM_LIFETIME_SECONDS
-            };
-        }).filter(r => r.remaining_seconds > 0);
+        const formattedRooms = rooms.map(room => ({
+            ...room,
+            matches: getUserMatches(room.owner_id),
+            remaining_seconds: 180,
+            max_seconds: 180
+        }));
 
         res.json({ success: true, rooms: formattedRooms, searchRank, compatibleRanks: [searchRank] });
     } catch (err) {
-        console.error("ROOMS GET ERROR:", err);
         res.status(500).json({ success: false, message: "İlanlar alınamadı." });
     }
 });
 
 app.post("/api/rooms", authenticateToken, (req, res) => {
     try {
-        const { role, mode, age, microphone, description, agents } = req.body || {};
+        const { role, mode, age, microphone, description } = req.body || {};
         const user = db.prepare(`SELECT rank FROM users WHERE id = ?`).get(req.user.id);
         
         db.prepare(`DELETE FROM rooms WHERE user_id = ?`).run(req.user.id);
 
-        const agentsJson = agents ? JSON.stringify(agents) : JSON.stringify([]);
-
         const result = db.prepare(`
-            INSERT INTO rooms (user_id, rank, role, mode, age, microphone, description, agents)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(req.user.id, user.rank, role || "Flex", mode || "Dereceli", age || "Yok", microphone ? 1 : 0, description || "", agentsJson);
+            INSERT INTO rooms (user_id, rank, role, mode, age, microphone, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(req.user.id, user.rank, role || "Flex", mode || "Dereceli", age || "Yok", microphone ? 1 : 0, description || "");
 
         res.status(201).json({ success: true, message: "İlan başarıyla oluşturuldu.", roomId: result.lastInsertRowid });
     } catch (err) {
