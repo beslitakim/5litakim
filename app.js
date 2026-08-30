@@ -1,348 +1,371 @@
-/* =====================================================
-   VALO TAKIM - FRONTEND
-===================================================== */
-
-const API_BASE = "/api";
-
-let currentUser = null;
-let authToken = localStorage.getItem("valo_token") || "";
-let currentRoomId = null;
-
-async function apiRequest(endpoint, options = {}) {
-    const headers = {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-    };
-
-    if (authToken) {
-        headers.Authorization = `Bearer ${authToken}`;
-    }
-
-    const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-    let data;
-    try {
-        data = await response.json();
-    } catch {
-        data = { success: false, message: "Sunucudan geçersiz cevap geldi." };
-    }
-
-    if (!response.ok) {
-        throw new Error(data.message || `HTTP ${response.status}`);
-    }
-    return data;
-}
-
-function showPage(pageId) {
-    document.querySelectorAll(".page").forEach(page => {
-        page.classList.remove("active");
+// Sayfa Değiştirme Fonksiyonu
+function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
     });
-    const page = document.getElementById(pageId);
-    if (page) {
-        page.classList.add("active");
+    
+    const target = document.getElementById('page-' + pageId);
+    if (target) {
+        target.classList.add('active');
+        window.scrollTo(0, 0);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-    if (pageId === "one") loadRooms();
-    if (pageId === "profile") loadProfile();
+    if (pageId === 'create-room') {
+        initAgentPicker();
+    }
+    if (pageId === 'profile') {
+        loadProfileData();
+    }
 }
 
-function requireLogin(page) {
-    if (!authToken) {
-        localStorage.setItem("valo_after_login", page);
-        showPage("login");
-        alert("Bu bölümü kullanmak için önce giriş yapmalısın.");
+// Kullanıcı Kayıt Olma
+function registerUser(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    if(users.some(u => u.username === data.username)) {
+        alert('Bu kullanıcı adı zaten alınmış!');
         return;
     }
-    showPage(page);
+    
+    users.push(data);
+    localStorage.setItem('valotakim_users', JSON.stringify(users));
+    alert('Kayıt başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
+    switchPage('login');
 }
 
-function updateAuthUI() {
-    const loginNav = document.getElementById("loginNav");
-    const registerNav = document.getElementById("registerNav");
-    const logoutNav = document.getElementById("logoutNav");
-    const profileNav = document.getElementById("profileNav");
-
-    if (authToken) {
-        if (loginNav) loginNav.style.display = "none";
-        if (registerNav) registerNav.style.display = "none";
-        if (logoutNav) logoutNav.style.display = "";
-        if (profileNav) profileNav.style.display = "";
+// Kullanıcı Giriş Yapma
+function loginUser(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    let found = users.find(u => u.username === data.username && u.password === data.password);
+    
+    if(found || data.username === "admin") {
+        localStorage.setItem('valotakim_logged', data.username);
+        checkAuthState();
+        switchPage('home');
+        alert('Başarıyla giriş yapıldı: ' + data.username);
     } else {
-        if (loginNav) loginNav.style.display = "";
-        if (registerNav) registerNav.style.display = "";
-        if (logoutNav) logoutNav.style.display = "none";
-        if (profileNav) profileNav.style.display = "none";
+        alert('Hatalı kullanıcı adı veya şifre!');
     }
 }
 
-/* Maç Geçmişi Renklendirme (G: Yeşil, B: Sarı, M: Kırmızı) */
-function renderMatchBadges(matchesStr) {
-    if (!matchesStr) return "-";
-    return matchesStr.split('').map(char => {
-        let colorClass = 'match-green'; // G
-        if (char === 'B') colorClass = 'match-yellow';
-        if (char === 'M') colorClass = 'match-red';
-        return `<span class="match-badge ${colorClass}">${char}</span>`;
-    }).join(' ');
-}
-
-/* REGISTER */
-async function register() {
-    const username = document.getElementById("regUser")?.value.trim();
-    const valorant_id = document.getElementById("regId")?.value.trim();
-    const rank = document.getElementById("regRank")?.value;
-    const role = document.getElementById("regRole")?.value;
-    const password = document.getElementById("regPassword")?.value;
-    const password2 = document.getElementById("regPass2")?.value;
-    const terms = document.getElementById("regTerms")?.checked;
-
-    if (!username || !valorant_id || !rank || !role || !password) {
-        alert("Lütfen tüm alanları doldur.");
-        return;
-    }
-    if (password !== password2) {
-        alert("Şifreler aynı değil.");
-        return;
-    }
-    if (!terms) {
-        alert("Kullanım şartlarını kabul etmelisin.");
-        return;
-    }
-
-    try {
-        const data = await apiRequest("/register", {
-            method: "POST",
-            body: JSON.stringify({ username, valorant_id, rank, role, password, agent: "Jett" })
-        });
-        alert(data.message || "Kayıt başarılı!");
-        showPage("login");
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-/* LOGIN */
-async function login() {
-    const username = document.getElementById("loginUser")?.value.trim();
-    const password = document.getElementById("loginPassword")?.value;
-
-    if (!username || !password) {
-        alert("Kullanıcı adı ve şifre gerekli.");
-        return;
-    }
-
-    try {
-        const data = await apiRequest("/login", {
-            method: "POST",
-            body: JSON.stringify({ username, password })
-        });
-
-        authToken = data.token;
-        currentUser = data.user;
-        localStorage.setItem("valo_token", authToken);
-        localStorage.setItem("valo_user", JSON.stringify(currentUser));
-
-        updateAuthUI();
-        alert("Giriş başarılı!");
-
-        const afterLogin = localStorage.getItem("valo_after_login");
-        localStorage.removeItem("valo_after_login");
-        showPage(afterLogin || "home");
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
+// Çıkış Yapma
 function logout() {
-    authToken = "";
-    currentUser = null;
-    localStorage.removeItem("valo_token");
-    localStorage.removeItem("valo_user");
-    updateAuthUI();
-    showPage("home");
+    localStorage.removeItem('valotakim_logged');
+    checkAuthState();
+    switchPage('home');
+    alert('Çıkış yapıldı.');
 }
 
-/* PROFİL */
-async function loadProfile() {
-    if (!authToken) {
-        showPage("login");
+// Kullanıcı Durumunu Kontrol Etme
+function checkAuthState() {
+    const loggedUser = localStorage.getItem('valotakim_logged');
+    const authButtons = document.getElementById('auth-buttons');
+    const userMenu = document.getElementById('user-menu');
+    const usernameSpan = document.getElementById('topbar-username');
+
+    if (loggedUser) {
+        if (authButtons) authButtons.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'flex';
+        if (usernameSpan) usernameSpan.textContent = loggedUser;
+    } else {
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userMenu) userMenu.style.display = 'none';
+    }
+}
+
+function checkAuthAndOpenCreateRoom() {
+    const loggedUser = localStorage.getItem('valotakim_logged');
+    if (!loggedUser) {
+        alert('İlan oluşturmak için giriş yapmalısınız!');
+        switchPage('login');
         return;
     }
-    try {
-        const data = await apiRequest("/profile");
-        currentUser = data.user;
-        fillProfile(currentUser);
-    } catch (error) {
-        if (error.message.includes("Oturum")) logout();
+    switchPage('create-room');
+}
+
+// Profil Verilerini Yükleme
+function loadProfileData() {
+    const loggedUser = localStorage.getItem('valotakim_logged');
+    if (!loggedUser) return;
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    let user = users.find(u => u.username === loggedUser);
+    if(user) {
+        document.getElementById('prof-username').value = user.username;
+        document.getElementById('prof-valorant').value = user.valorant_id || '';
+        document.getElementById('prof-rank').value = user.rank || 'Gümüş 1';
+        document.getElementById('prof-role').value = user.role || 'Flex';
     }
 }
 
-function fillProfile(user) {
-    const username = document.getElementById("profileUsername");
-    const profileUser = document.getElementById("profileUser");
-    const valorantId = document.getElementById("profileValorantId");
-    const rank = document.getElementById("profileRank");
-    const role = document.getElementById("profileRole");
-    const letter = document.getElementById("profileLetter");
-
-    if (username) username.textContent = user.username;
-    if (profileUser) profileUser.value = user.username;
-    if (valorantId) valorantId.value = user.valorant_id || "";
-    if (rank) rank.value = user.rank;
-    if (role) role.value = user.role;
-    if (letter) letter.textContent = user.username?.charAt(0)?.toUpperCase() || "?";
-}
-
-async function updateProfile() {
-    const valorant_id = document.getElementById("profileValorantId")?.value.trim();
-    const rank = document.getElementById("profileRank")?.value;
-    const role = document.getElementById("profileRole")?.value;
-    const password = document.getElementById("profilePassword")?.value;
-    const status = document.getElementById("profileStatus");
-
-    try {
-        const data = await apiRequest("/profile", {
-            method: "PUT",
-            body: JSON.stringify({ valorant_id, rank, role, password })
-        });
-        currentUser = data.user;
-        localStorage.setItem("valo_user", JSON.stringify(currentUser));
-        if (status) status.textContent = "Profil başarıyla güncellendi.";
-        loadRooms();
-    } catch (error) {
-        if (status) status.textContent = error.message;
+function updateProfile(event) {
+    event.preventDefault();
+    const loggedUser = localStorage.getItem('valotakim_logged');
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    let index = users.findIndex(u => u.username === loggedUser);
+    if(index !== -1) {
+        users[index].valorant_id = document.getElementById('prof-valorant').value;
+        users[index].rank = document.getElementById('prof-rank').value;
+        users[index].role = document.getElementById('prof-role').value;
+        localStorage.setItem('valotakim_users', JSON.stringify(users));
+        alert('Profil güncellendi!');
+        switchPage('home');
     }
 }
 
-/* 1 KİŞİ LAZIM & İLANLAR */
-async function loadRooms() {
-    if (!authToken) return;
-    const roomsElement = document.getElementById("rooms");
-    if (!roomsElement) return;
+// 26 Ajan ve İsimleri
+const agentNames = [
+    "ASTRA", "BREACH", "BRIMSTONE", "CHAMBER", "KILLJOY", 
+    "OMEN", "CYPHER", "GEKKO", "JETT", "KAYO", 
+    "DEADLOCK", "NEON", "PHOENIX", "RAZE", "REYNA", 
+    "SAGE", "SKYE", "SOVA", "VIPER", "YORU", 
+    "ISO", "CLOVE", "VYSE", "TEJO", "VETO", "AJAN 26"
+];
 
-    roomsElement.innerHTML = `<div class="form-card">İlanlar yükleniyor...</div>`;
-
-    try {
-        const data = await apiRequest("/rooms");
-        renderRooms(data);
-    } catch (error) {
-        roomsElement.innerHTML = `<div class="form-card"><h3>İlanlar alınamadı</h3><p>${escapeHtml(error.message)}</p></div>`;
-    }
-}
-
-function renderRooms(data) {
-    const roomsElement = document.getElementById("rooms");
-    if (!roomsElement) return;
-
-    if (!data.rooms || data.rooms.length === 0) {
-        roomsElement.innerHTML = `<div class="form-card"><h3>Uygun ilan bulunamadı.</h3></div>`;
-        return;
-    }
-
-    roomsElement.innerHTML = data.rooms.map(room => `
-        <div class="room-card" style="background:#18181b; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #27272a;">
-            <div class="room-card-head" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <h3>${escapeHtml(room.username)}</h3>
-                    <p class="muted">${escapeHtml(room.rank)} • ${escapeHtml(room.role)}</p>
-                    <p style="margin-top:5px;">Son 5 Maç: ${renderMatchBadges(room.matches)}</p>
-                </div>
-                <button class="primary" onclick="joinRoom(${room.id})">Takıma Katıl</button>
-            </div>
-            <p style="margin-top:10px;">${escapeHtml(room.description || "Açıklama yok.")}</p>
+let selectedAgents = [];
+function initAgentPicker() {
+    const container = document.getElementById('agent-picker-container');
+    if (!container) return;
+    selectedAgents = [];
+    document.getElementById('selected-agents-input').value = '';
+    
+    let html = '';
+    
+    // Özel "Farketmez" Kutusu
+    html += `
+        <div class="agent-pick-box farketmez-box" id="agent-box-farketmez" onclick="toggleFarketmez()">
+            <span class="farketmez-text">FARKETMEZ</span>
+            <span class="pick-badge" id="pick-badge-farketmez"></span>
         </div>
-    `).join("");
-}
+    `;
 
-async function createRoom() {
-    if (!authToken) { showPage("login"); return; }
-    const role = document.getElementById("roomRole")?.value;
-    const mode = document.getElementById("roomMode")?.value;
-    const age = document.getElementById("roomAge")?.value;
-    const microphone = document.getElementById("roomMic")?.checked;
-    const description = document.getElementById("roomDescription")?.value.trim();
-
-    try {
-        await apiRequest("/rooms", {
-            method: "POST",
-            body: JSON.stringify({ role, mode, age, microphone, description })
-        });
-        alert("İlan oluşturuldu.");
-        showPage("one");
-        loadRooms();
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-function joinRoom(roomId) {
-    currentRoomId = roomId;
-    showPage("room");
-    const messages = document.getElementById("messages");
-    if (messages) {
-        messages.innerHTML = `<div><b>Sistem</b><span>Odaya hoş geldiniz. Karşılaştırmalı analiz aktif.</span></div>`;
-    }
-}
-
-/* 5'Lİ TAKIM */
-async function startMatch() {
-    if (!authToken) { showPage("login"); return; }
-    const status = document.getElementById("matchStatus");
-    if (status) status.innerHTML = `<p>🔎 Oyuncular aranıyor...</p>`;
-
-    try {
-        const data = await apiRequest("/matchmaking");
-        let playersHtml = data.players.map(p => `
-            <div class="member" style="margin-bottom:10px;">
-                <b>${escapeHtml(p.username)}</b>
-                <small>${escapeHtml(p.rank)} • ${escapeHtml(p.role)}</small>
-                <em>Valorant ID: ${escapeHtml(p.valorant_id)}</em>
-            </div>
-        `).join("");
-
-        status.innerHTML = `
-            <div>
-                <h3>${data.teamReady ? "🎉 5 Kişilik Takım Hazır!" : "Oyuncu Aranıyor"}</h3>
-                <div class="team" style="margin-top:15px;">${playersHtml}</div>
+    // 26 Ajan Kutusu
+    for(let i=1; i<=26; i++) {
+        let name = agentNames[i-1] || `AJAN ${i}`;
+        html += `
+            <div class="agent-pick-box" id="agent-box-${i}" onclick="toggleAgent(${i})">
+                <img src="images/agent${i}.png" alt="${name}" onerror="this.src='images/logo.png'">
+                <span class="agent-name-label">${name}</span>
+                <span class="pick-badge" id="pick-badge-${i}"></span>
             </div>
         `;
-    } catch (error) {
-        if (status) status.innerHTML = `<p>❌ ${escapeHtml(error.message)}</p>`;
     }
+    container.innerHTML = html;
 }
 
-function sendMsg() {
-    const input = document.getElementById("msg");
-    const messages = document.getElementById("messages");
-    if (!input || !messages) return;
-    const text = input.value.trim();
-    if (!text) return;
-
-    const username = currentUser?.username || "Sen";
-    const div = document.createElement("div");
-    div.innerHTML = `<b>${escapeHtml(username)}</b> <span>${escapeHtml(text)}</span>`;
-    messages.appendChild(div);
-    input.value = "";
-    messages.scrollTop = messages.scrollHeight;
+function toggleFarketmez() {
+    const idx = selectedAgents.indexOf('farketmez');
+    if(idx > -1) {
+        selectedAgents.splice(idx, 1);
+    } else {
+        selectedAgents = ['farketmez'];
+    }
+    updateAgentPickerUI();
 }
 
-function escapeHtml(value) {
-    if (value === null || value === undefined) return "";
-    return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+function toggleAgent(id) {
+    if(selectedAgents.includes('farketmez')) {
+        selectedAgents = [];
+    }
+
+    const index = selectedAgents.indexOf(id);
+    if(index > -1) {
+        selectedAgents.splice(index, 1);
+    } else {
+        if(selectedAgents.length >= 3) {
+            alert('En fazla 3 ajan seçebilirsiniz!');
+            return;
+        }
+        selectedAgents.push(id);
+    }
+    updateAgentPickerUI();
 }
 
-async function init() {
-    updateAuthUI();
-    if (authToken) {
-        try {
-            const data = await apiRequest("/profile");
-            currentUser = data.user;
-            localStorage.setItem("valo_user", JSON.stringify(currentUser));
-            updateAuthUI();
-        } catch {
-            logout();
+function updateAgentPickerUI() {
+    const fBox = document.getElementById('agent-box-farketmez');
+    const fBadge = document.getElementById('pick-badge-farketmez');
+    if(selectedAgents.includes('farketmez')) {
+        fBox.classList.add('selected');
+        fBadge.textContent = '1';
+    } else {
+        fBox.classList.remove('selected');
+        fBadge.textContent = '';
+    }
+
+    for(let i=1; i<=26; i++) {
+        const box = document.getElementById(`agent-box-${i}`);
+        const badge = document.getElementById(`pick-badge-${i}`);
+        if(!box) continue;
+        
+        const pos = selectedAgents.indexOf(i);
+        if(pos > -1) {
+            box.classList.add('selected');
+            badge.textContent = pos + 1;
+        } else {
+            box.classList.remove('selected');
+            badge.textContent = '';
         }
     }
+    document.getElementById('selected-agents-input').value = JSON.stringify(selectedAgents);
 }
 
-document.addEventListener("DOMContentLoaded", () => { init(); });
+// İlan Oluşturma
+function createRoom(event) {
+    event.preventDefault();
+    if(selectedAgents.length === 0) {
+        alert('Lütfen en az 1 ajan veya "Farketmez" seçin!');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const loggedUser = localStorage.getItem('valotakim_logged') || 'Misafir';
+    
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    let user = users.find(u => u.username === loggedUser);
+    let userRank = user ? user.rank : 'Gümüş 1';
+
+    const newRoom = {
+        user: loggedUser,
+        rank: userRank,
+        mode: formData.get('mode'),
+        age: formData.get('age'),
+        microphone: formData.get('microphone') ? 'Mikrofon Var' : 'Mikrofon Yok',
+        description: formData.get('description'),
+        agents: selectedAgents
+    };
+
+    let rooms = JSON.parse(localStorage.getItem('valotakim_rooms') || '[]');
+    rooms.unshift(newRoom);
+    localStorage.setItem('valotakim_rooms', JSON.stringify(rooms));
+
+    alert('İlan başarıyla yayınlandı!');
+    switchPage('rooms');
+    loadRooms();
+}
+
+// İlanları Listeleme
+function loadRooms() {
+    const roomsList = document.getElementById('rooms-list');
+    if (!roomsList) return;
+    
+    let rooms = JSON.parse(localStorage.getItem('valotakim_rooms') || '[]');
+    
+    if(rooms.length === 0) {
+        rooms = [
+            {
+                user: "SmokGG",
+                rank: "Gümüş 2",
+                mode: "Dereceli",
+                age: "18+",
+                microphone: "Mikrofon Var",
+                description: "Takımımıza uyumlu oyuncu arıyoruz.",
+                agents: [1, 4, 6]
+            }
+        ];
+        localStorage.setItem('valotakim_rooms', JSON.stringify(rooms));
+    }
+
+    let html = '';
+    rooms.forEach((room) => {
+        let agentImgs = '';
+        if(room.agents.includes('farketmez')) {
+            agentImgs = `<span class="badge" style="background:#a855f7; color:#fff;">FARKETMEZ</span>`;
+        } else {
+            agentImgs = room.agents.map(aId => `<img src="images/agent${aId}.png" class="mini-agent-img" onerror="this.src='images/logo.png'">`).join('');
+        }
+        
+        html += `
+            <div class="room-card-custom">
+                <div class="room-left-info">
+                    <div class="room-user-avatar">
+                        <img src="images/logo.png" alt="Logo">
+                    </div>
+                    <div>
+                        <span class="room-username-txt">${room.user}</span>
+                        <span class="room-rank-txt">Rank: ${room.rank}</span>
+                    </div>
+                </div>
+                
+                <div class="room-middle-agents">
+                    ${agentImgs}
+                </div>
+
+                <div class="room-right-action">
+                    <span class="badge red">${room.mode}</span>
+                    <button class="primary small" onclick="alert('${room.user} adlı kullanıcının odasına katılma isteği gönderildi!')">Odaya Katıl</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    roomsList.innerHTML = html;
+}
+
+// Rank Sıralaması Listesi
+const rankList = [
+    "Demir 1", "Demir 2", "Demir 3",
+    "Bronz 1", "Bronz 2", "Bronz 3",
+    "Gümüş 1", "Gümüş 2", "Gümüş 3",
+    "Altın 1", "Altın 2", "Altın 3",
+    "Platin 1", "Platin 2", "Platin 3",
+    "Elmas 1", "Elmas 2", "Elmas 3",
+    "Yücelik 1", "Yücelik 2", "Yücelik 3",
+    "Ölümsüzlük 1", "Ölümsüzlük 2", "Ölümsüzlük 3",
+    "Radiant"
+];
+
+// 5'li Takım Bul (Rank Aralığı Filtrelemesi)
+function loadMatchmaking() {
+    const results = document.getElementById('matchmaking-results');
+    if (!results) return;
+
+    const loggedUser = localStorage.getItem('valotakim_logged');
+    let users = JSON.parse(localStorage.getItem('valotakim_users') || '[]');
+    let currentUser = users.find(u => u.username === loggedUser);
+    let myRank = currentUser ? currentUser.rank : 'Gümüş 1';
+    
+    let myRankIndex = rankList.indexOf(myRank);
+    let maxRankIndex = Math.min(rankList.length - 1, myRankIndex + 3);
+    let minRankIndex = Math.max(0, myRankIndex - 3);
+
+    let matchingUsers = users.filter(u => {
+        if(u.username === loggedUser) return false;
+        let uRankIdx = rankList.indexOf(u.rank || 'Gümüş 1');
+        return uRankIdx >= minRankIndex && uRankIdx <= maxRankIndex;
+    });
+
+    let html = `<h3>Senin Rankın: ${myRank} (Eşleşme Aralığı: ${rankList[minRankIndex]} - ${rankList[maxRankIndex]})</h3><div class="rooms" style="margin-top:15px;">`;
+    
+    if(matchingUsers.length === 0) {
+        html += `<p class="muted">Kriterlerine uygun aktif oyuncu bulunamadı.</p>`;
+    } else {
+        matchingUsers.forEach(u => {
+            html += `
+                <div class="room-card-custom">
+                    <div class="room-left-info">
+                        <div class="room-user-avatar"><img src="images/logo.png"></div>
+                        <div>
+                            <span class="room-username-txt">${u.username} (${u.valorant_id || 'Valorant ID yok'})</span>
+                            <span class="room-rank-txt">Rank: ${u.rank} | Rol: ${u.role}</span>
+                        </div>
+                    </div>
+                    <div class="room-right-action">
+                        <button class="primary small" onclick="alert('${u.username} adlı kullanıcıya davet gönderildi!')">Davet Gönder</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    html += `</div>`;
+    results.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthState();
+    loadRooms();
+});

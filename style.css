@@ -745,4 +745,364 @@ footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; bor
                             YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
                         </p>
                     </div>
-                </div>
+                </div>/* Alt Sayfalar İçin Karanlık Gankster Teması ve Geri Dönüş Butonu */
+.subpage-wrapper {
+    background: #0b0d12 !important;
+    min-height: calc(100vh - 120px);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.subpage-nav-top {
+    margin-bottom: 25px;
+}
+
+.small-back-btn {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+}
+
+/* İlan Kutuları ve Form Kartlarının Temaya Uyarlanması */
+.form-card, .room {
+    background: rgba(17, 21, 29, 0.85) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(168, 85, 247, 0.25) !important;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.1) !important;
+    border-radius: 16px !important;
+}
+
+.form-card input, .form-card select, .form-card textarea, .filters select {
+    background: #131722 !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    color: #f4f5f7 !important;
+    border-radius: 8px !important;
+}
+
+.form-card input:focus, .form-card select:focus, .form-card textarea:focus {
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4) !important;
+    outline: none;
+}
+/* İlan Verme Ajan Seçim Kutuları */
+.agent-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 15px 0 25px 0;
+}
+
+.agent-pick-box {
+    position: relative;
+    height: 70px;
+    background: #131722;
+    border: 2px solid #303642;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agent-pick-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.agent-pick-box.selected {
+    border-color: #a855f7;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+    transform: scale(1.05);
+}
+
+.pick-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #a855f7;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Özel Tasarımlı İlan Kartları */
+.room-card-custom {
+    background: rgba(17, 21, 29, 0.9);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.room-left-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.room-user-avatar {
+    width: 45px;
+    height: 45px;
+    background: #1a1f2c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #a855f7;
+    overflow: hidden;
+}
+
+.room-user-avatar img {
+    width: 80%;
+    height: auto;
+}
+
+.room-username-txt {
+    display: block;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+}
+
+.room-rank-txt {
+    display: block;
+    font-size: 12px;
+    color: #a855f7;
+    font-weight: 700;
+}
+
+.room-middle-agents {
+    display: flex;
+    gap: 8px;
+}
+
+.mini-agent-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    object-fit: cover;
+    background: #171b23;
+}
+
+.room-right-action {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}.agent-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5'li kolon yapısı */
+    gap: 10px;
+    margin: 15px 0 25px 0;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.agent-pick-box {
+    position: relative;
+    height: 60px;
+    background: #131722;
+    border: 2px solid #303642;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.farketmez-box {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), #131722);
+    border-color: #a855f7;
+}
+
+.farketmez-text {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: center;
+}/* 26 Ajan ve Farketmez Seçim Alanı Stilleri */
+.agent-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 12px;
+    margin: 15px 0 25px 0;
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(10, 12, 18, 0.6);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 12px;
+}
+
+.agent-pick-box {
+    position: relative;
+    width: 85px;
+    height: 85px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(20, 25, 35, 0.9) 100%);
+    border: 2px solid rgba(168, 85, 247, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agent-pick-box img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.agent-pick-box:hover {
+    transform: translateY(-4px) scale(1.05);
+    border-color: #c084fc;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+}
+
+.agent-pick-box.selected {
+    border-color: #a855f7;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.9);
+    transform: scale(1.06);
+    background: rgba(168, 85, 247, 0.4);
+}
+
+.agent-name-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(11, 13, 18, 0.85);
+    color: #f4f5f7;
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+    padding: 3px 0;
+    letter-spacing: 0.5px;
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.farketmez-box {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.4) 0%, #131722 100%) !important;
+    justify-content: center !important;
+}
+
+.farketmez-text {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: center;
+    z-index: 2;
+}
+
+.pick-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #a855f7;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    box-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+/* İlan Kartı Tasarımları */
+.room-card-custom {
+    background: rgba(17, 21, 29, 0.9);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.room-left-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.room-user-avatar {
+    width: 45px;
+    height: 45px;
+    background: #1a1f2c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #a855f7;
+    overflow: hidden;
+}
+
+.room-user-avatar img {
+    width: 80%;
+    height: auto;
+}
+
+.room-username-txt {
+    display: block;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+}
+
+.room-rank-txt {
+    display: block;
+    font-size: 12px;
+    color: #a855f7;
+    font-weight: 700;
+}
+
+.room-middle-agents {
+    display: flex;
+    gap: 8px;
+}
+
+.mini-agent-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    object-fit: cover;
+    background: #171b23;
+}
+
+.room-right-action {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
