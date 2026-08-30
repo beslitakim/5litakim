@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>VALO TAKIM - Takımını Bul</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css">
+
+</head>
+
+
+<body>
+
+
+<header class="topbar">
+
+
+    <div
+        class="logo"
+        onclick="showPage('home')">
+
+        VALO<span>TAKIM</span>
+
+    </div>
+
+
+    <nav>
+
+        <button
+            onclick="showPage('home')">
+
+            Ana Menü
+
+        </button>
+
+
+        <button
+            onclick="requireLogin('one')">
+
+            1 Kişi Lazım
+
+        </button>
+
+
+        <button
+            onclick="requireLogin('five')">
+
+            5'li Takım Bul
+
+        </button>
+
+
+        <button
+            id="profileNav"
+            onclick="requireLogin('profile')"
+            style="display:none;">
+
+            Profilim
+
+        </button>
+
+    </nav>
+
+
+    <div class="auth">
+
+
+        <button
+            id="loginNav"
+            class="ghost"
+            onclick="showPage('login')">
+
+            Giriş Yap
+
+        </button>
+
+
+        <button
+            id="registerNav"
+            class="primary small"
+            onclick="showPage('register')">
+
+            Kayıt Ol
+
+        </button>
+
+
+        <button
+            id="logoutNav"
+            class="ghost"
+            onclick="logout()"
+            style="display:none;">
+
+            Çıkış Yap
+
+        </button>
+
+
+    </div>
+
+
+</header>
+
+
+<main>
+
+
+<!-- =================================================
+     ANA SAYFA
+================================================= -->
+
+<section
+    id="home"
+    class="page active">
+
+
+    <div class="hero">
+
+
+        <div>
+
+
+            <p class="eyebrow">
+
+                VALORANT OYUNCU EŞLEŞTİRME
+
+            </p>
+
+
+            <h1>
+
+                Takımını bul.<br>
+
+                <span>Oyuna gir.</span>
+
+            </h1>
+
+
+            <p class="muted">
+
+                Tek oyuncu ara veya birbirini tanımayan
+                5 oyuncuyla yeni bir takım oluştur.
+
+            </p>
+
+
+            <div class="hero-buttons">
+
+
+                <button
+                    class="primary"
+                    onclick="requireLogin('one')">
+
+                    1 Kişi Lazım
+
+                </button>
+
+
+                <button
+                    class="secondary"
+                    onclick="requireLogin('five')">
+
+                    5'li Takım Bul
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+        <div class="hero-card">
+
+
+            <div class="status">
+
+                <i></i>
+
+                Sistem aktif
+
+            </div>
+
+
+            <h3>
+
+                Hızlı Eşleşme
+
+            </h3>
+
+
+            <p>
+
+                Profilindeki ranka göre en yakın
+                oyuncuları otomatik olarak bul.
+
+            </p>
+
+
+            <div class="mini-team">
+
+                <span>DUELIST</span>
+
+                <span>CONTROLLER</span>
+
+                <span>INITIATOR</span>
+
+                <span>SENTINEL</span>
+
+                <span>FLEX</span>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     1 KİŞİ LAZIM
+================================================= -->
+
+<section
+    id="one"
+    class="page">
+
+
+    <div class="section-head">
+
+
+        <div>
+
+            <p class="eyebrow">
+
+                TAKIM ARIYORUM
+
+            </p>
+
+
+            <h2>
+
+                1 Kişi Lazım
+
+            </h2>
+
+
+            <p class="muted">
+
+                Profilindeki ranka uygun açık takımları
+                görüntüle veya kendi ilanını oluştur.
+
+            </p>
+
+        </div>
+
+
+        <button
+            class="primary"
+            onclick="requireLogin('create')">
+
+            + İlan Oluştur
+
+        </button>
+
+
+    </div>
+
+
+    <div class="filters">
+
+
+        <select id="filterRank">
+
+            <option value="">Rank: Profilime göre</option>
+
+            <option>Demir 1</option>
+            <option>Demir 2</option>
+            <option>Demir 3</option>
+
+            <option>Bronz 1</option>
+            <option>Bronz 2</option>
+            <option>Bronz 3</option>
+
+            <option>Gümüş 1</option>
+            <option>Gümüş 2</option>
+            <option>Gümüş 3</option>
+
+            <option>Altın 1</option>
+            <option>Altın 2</option>
+            <option>Altın 3</option>
+
+            <option>Platin 1</option>
+            <option>Platin 2</option>
+            <option>Platin 3</option>
+
+            <option>Elmas 1</option>
+            <option>Elmas 2</option>
+            <option>Elmas 3</option>
+
+            <option>Yücelik 1</option>
+            <option>Yücelik 2</option>
+            <option>Yücelik 3</option>
+
+            <option>Ölümsüzlük 1</option>
+            <option>Ölümsüzlük 2</option>
+            <option>Ölümsüzlük 3</option>
+
+            <option>Radiant</option>
+
+        </select>
+
+
+        <select id="filterRole">
+
+            <option value="">Rol: Tümü</option>
+
+            <option>Duelist</option>
+            <option>Controller</option>
+            <option>Initiator</option>
+            <option>Sentinel</option>
+            <option>Flex</option>
+
+        </select>
+
+
+        <select id="filterMode">
+
+            <option value="">Oyun: Tümü</option>
+
+            <option>Dereceli</option>
+            <option>Derecesiz</option>
+
+        </select>
+
+
+        <button
+            class="secondary"
+            onclick="loadRooms()">
+
+            Yenile
+
+        </button>
+
+
+    </div>
+
+
+    <div
+        id="rooms"
+        class="rooms">
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     5'Lİ TAKIM
+================================================= -->
+
+<section
+    id="five"
+    class="page">
+
+
+    <div class="form-card">
+
+
+        <p class="eyebrow">
+
+            OTOMATİK EŞLEŞME
+
+        </p>
+
+
+        <h2>
+
+            5'li Takım Bul
+
+        </h2>
+
+
+        <p class="muted">
+
+            Profilindeki ranka göre sana en yakın
+            dört oyuncuyu bulup 5 kişilik takım oluşturacağız.
+
+        </p>
+
+
+        <div class="grid2">
+
+
+            <!-- RANK ARTIK MANUEL DEĞİL -->
+
+            <label>
+
+                Rank aralığı
+
+                <select
+                    id="matchRank"
+                    disabled>
+
+                    <option value="profile">
+
+                        Profil rankım ±1
+
+                    </option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Tercih edilen rol
+
+                <select id="matchRole">
+
+                    <option>Flex</option>
+                    <option>Duelist</option>
+                    <option>Controller</option>
+                    <option>Initiator</option>
+                    <option>Sentinel</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Oyun modu
+
+                <select id="matchMode">
+
+                    <option>Dereceli</option>
+                    <option>Derecesiz</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Sunucu
+
+                <select id="matchServer">
+
+                    <option>İstanbul</option>
+                    <option>Frankfurt</option>
+
+                </select>
+
+            </label>
+
+
+        </div>
+
+
+        <label class="check">
+
+            <input
+                type="checkbox"
+                id="matchMic"
+                checked>
+
+            Mikrofon kullanıyorum
+
+        </label>
+
+
+        <button
+            class="primary wide"
+            onclick="startMatch()">
+
+            Eşleşme Ara
+
+        </button>
+
+
+        <div
+            id="matchStatus"
+            class="match-status">
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     İLAN OLUŞTUR
+================================================= -->
+
+<section
+    id="create"
+    class="page">
+
+
+    <div class="form-card">
+
+
+        <p class="eyebrow">
+
+            TAKIM İLANI
+
+        </p>
+
+
+        <h2>
+
+            1 Kişilik İlan Oluştur
+
+        </h2>
+
+
+        <p class="muted">
+
+            Aradığın oyuncunun rankı profilindeki ranka
+            göre otomatik olarak belirlenir.
+
+        </p>
+
+
+        <div class="grid2">
+
+
+            <!-- =================================================
+                 ÖNEMLİ:
+                 RANK MANUEL SEÇİLMEYECEK
+                 PROFİLDEN OTOMATİK GELECEK
+            ================================================= -->
+
+            <label>
+
+                Aranan rank
+
+                <div
+                    id="roomRankDisplay"
+                    class="profile-rank-box">
+
+                    Profil rankın yükleniyor...
+
+                </div>
+
+
+                <!--
+                    Backend'e gönderilecek rank.
+                    JavaScript bunu profil rankı ile dolduracak.
+                -->
+
+                <input
+                    type="hidden"
+                    id="roomRank">
+
+            </label>
+
+
+            <label>
+
+                Aranan rol
+
+                <select id="roomRole">
+
+                    <option>Controller</option>
+                    <option>Duelist</option>
+                    <option>Initiator</option>
+                    <option>Sentinel</option>
+                    <option>Flex</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Oyun modu
+
+                <select id="roomMode">
+
+                    <option>Dereceli</option>
+                    <option>Derecesiz</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Yaş sınırı
+
+                <select id="roomAge">
+
+                    <option>Yok</option>
+                    <option>16+</option>
+                    <option>18+</option>
+
+                </select>
+
+            </label>
+
+
+        </div>
+
+
+        <div class="rank-info">
+
+
+            <strong>
+
+                🎯 Otomatik rank eşleşmesi
+
+            </strong>
+
+
+            <span>
+
+                İlanın, profilindeki rankın
+                en fazla 1 rank altı veya 1 rank üstündeki
+                oyunculara gösterilir.
+
+            </span>
+
+
+        </div>
+
+
+        <label class="check">
+
+            <input
+                type="checkbox"
+                id="roomMic"
+                checked>
+
+            Mikrofon gerekli
+
+        </label>
+
+
+        <label>
+
+            Takım şartları
+
+            <textarea
+                id="roomDescription"
+                placeholder="Örn: İletişimi iyi, toxic olmayan oyuncular."></textarea>
+
+        </label>
+
+
+        <button
+            class="primary wide"
+            onclick="createRoom()">
+
+            İlanı Oluştur
+
+        </button>
+
+
+        <div
+            id="createStatus"
+            class="match-status">
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     PROFİL
+================================================= -->
+
+<section
+    id="profile"
+    class="page">
+
+
+    <div class="form-card">
+
+
+        <p class="eyebrow">
+
+            HESABIM
+
+        </p>
+
+
+        <h2>
+
+            Profilim
+
+        </h2>
+
+
+        <p class="muted">
+
+            Hesap bilgilerini buradan güncelleyebilirsin.
+
+        </p>
+
+
+        <div class="profile-header">
+
+
+            <div class="profile-avatar">
+
+                <span id="profileLetter">
+
+                    ?
+
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <h3 id="profileUsername">
+
+                    Kullanıcı
+
+                </h3>
+
+
+                <p
+                    id="profileJoined"
+                    class="muted">
+
+                    VALO TAKIM üyesi
+
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="grid2">
+
+
+            <label>
+
+                Kullanıcı adı
+
+                <input
+                    id="profileUser"
+                    type="text"
+                    disabled>
+
+            </label>
+
+
+            <label>
+
+                Valorant ID
+
+                <input
+                    id="profileValorantId"
+                    type="text"
+                    placeholder="Örn: Smyk#1234">
+
+            </label>
+
+
+            <label>
+
+                Rank
+
+                <select id="profileRank">
+
+                    <option>Demir 1</option>
+                    <option>Demir 2</option>
+                    <option>Demir 3</option>
+
+                    <option>Bronz 1</option>
+                    <option>Bronz 2</option>
+                    <option>Bronz 3</option>
+
+                    <option>Gümüş 1</option>
+                    <option>Gümüş 2</option>
+                    <option>Gümüş 3</option>
+
+                    <option>Altın 1</option>
+                    <option>Altın 2</option>
+                    <option>Altın 3</option>
+
+                    <option>Platin 1</option>
+                    <option>Platin 2</option>
+                    <option>Platin 3</option>
+
+                    <option>Elmas 1</option>
+                    <option>Elmas 2</option>
+                    <option>Elmas 3</option>
+
+                    <option>Yücelik 1</option>
+                    <option>Yücelik 2</option>
+                    <option>Yücelik 3</option>
+
+                    <option>Ölümsüzlük 1</option>
+                    <option>Ölümsüzlük 2</option>
+                    <option>Ölümsüzlük 3</option>
+
+                    <option>Radiant</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Ana rol
+
+                <select id="profileRole">
+
+                    <option>Flex</option>
+                    <option>Duelist</option>
+                    <option>Controller</option>
+                    <option>Initiator</option>
+                    <option>Sentinel</option>
+
+                </select>
+
+            </label>
+
+
+        </div>
+
+
+        <div class="profile-password">
+
+
+            <h3>
+
+                Şifre Değiştir
+
+            </h3>
+
+
+            <p class="muted">
+
+                Değiştirmek istemiyorsan boş bırak.
+
+            </p>
+
+
+            <label>
+
+                Yeni şifre
+
+                <input
+                    id="profilePassword"
+                    type="password"
+                    placeholder="En az 6 karakter">
+
+            </label>
+
+
+            <label>
+
+                Yeni şifre tekrar
+
+                <input
+                    id="profilePassword2"
+                    type="password"
+                    placeholder="Yeni şifreyi tekrar yaz">
+
+            </label>
+
+
+        </div>
+
+
+        <button
+            class="primary wide"
+            onclick="updateProfile()">
+
+            💾 Bilgileri Güncelle
+
+        </button>
+
+
+        <div
+            id="profileStatus"
+            class="match-status">
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     GİRİŞ
+================================================= -->
+
+<section
+    id="login"
+    class="page">
+
+
+    <div class="form-card narrow">
+
+
+        <p class="eyebrow">
+
+            HOŞ GELDİN
+
+        </p>
+
+
+        <h2>
+
+            Giriş Yap
+
+        </h2>
+
+
+        <label>
+
+            Kullanıcı adı
+
+            <input
+                id="loginUser"
+                type="text"
+                placeholder="Kullanıcı adın"
+                autocomplete="username">
+
+        </label>
+
+
+        <label>
+
+            Şifre
+
+            <input
+                id="loginPassword"
+                type="password"
+                placeholder="Şifren">
+
+        </label>
+
+
+        <button
+            class="primary wide"
+            onclick="login()">
+
+            Giriş Yap
+
+        </button>
+
+
+        <p class="center muted">
+
+            Hesabın yok mu?
+
+
+            <button
+                class="link"
+                onclick="showPage('register')">
+
+                Kayıt Ol
+
+            </button>
+
+        </p>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     KAYIT
+================================================= -->
+
+<section
+    id="register"
+    class="page">
+
+
+    <div class="form-card">
+
+
+        <p class="eyebrow">
+
+            YENİ HESAP
+
+        </p>
+
+
+        <h2>
+
+            Kayıt Ol
+
+        </h2>
+
+
+        <div class="grid2">
+
+
+            <label>
+
+                Kullanıcı adı
+
+                <input
+                    id="regUser"
+                    type="text"
+                    placeholder="Örn: Smyk"
+                    autocomplete="username">
+
+            </label>
+
+
+            <label>
+
+                Valorant ID
+
+                <input
+                    id="regId"
+                    type="text"
+                    placeholder="Örn: Smyk#1234">
+
+            </label>
+
+
+            <label>
+
+                Rank
+
+                <select id="regRank">
+
+                    <option>Demir 1</option>
+                    <option>Demir 2</option>
+                    <option>Demir 3</option>
+
+                    <option>Bronz 1</option>
+                    <option>Bronz 2</option>
+                    <option>Bronz 3</option>
+
+                    <option>Gümüş 1</option>
+                    <option>Gümüş 2</option>
+                    <option>Gümüş 3</option>
+
+                    <option>Altın 1</option>
+                    <option>Altın 2</option>
+                    <option>Altın 3</option>
+
+                    <option>Platin 1</option>
+                    <option>Platin 2</option>
+                    <option>Platin 3</option>
+
+                    <option>Elmas 1</option>
+                    <option>Elmas 2</option>
+                    <option>Elmas 3</option>
+
+                    <option>Yücelik 1</option>
+                    <option>Yücelik 2</option>
+                    <option>Yücelik 3</option>
+
+                    <option>Ölümsüzlük 1</option>
+                    <option>Ölümsüzlük 2</option>
+                    <option>Ölümsüzlük 3</option>
+
+                    <option>Radiant</option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+
+                Ana rol
+
+                <select id="regRole">
+
+                    <option>Flex</option>
+                    <option>Duelist</option>
+                    <option>Controller</option>
+                    <option>Initiator</option>
+                    <option>Sentinel</option>
+
+                </select>
+
+            </label>
+
+
+        </div>
+
+
+        <label>
+
+            Şifre
+
+            <input
+                id="regPassword"
+                type="password"
+                placeholder="En az 6 karakter"
+                autocomplete="new-password">
+
+        </label>
+
+
+        <label>
+
+            Şifre tekrar
+
+            <input
+                id="regPass2"
+                type="password"
+                placeholder="Şifreni tekrar yaz"
+                autocomplete="new-password">
+
+        </label>
+
+
+        <label class="check">
+
+            <input
+                id="regTerms"
+                type="checkbox">
+
+            Kullanım şartlarını kabul ediyorum.
+
+        </label>
+
+
+        <button
+            class="primary wide"
+            onclick="register()">
+
+            Hesap Oluştur
+
+        </button>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =================================================
+     ODA
+================================================= -->
+
+<section
+    id="room"
+    class="page">
+
+
+    <div class="chat-layout">
+
+
+        <div class="chat">
+
+
+            <div class="chat-head">
+
+
+                <div>
+
+                    <span class="status">
+
+                        <i></i>
+
+                        ODA #9281
+
+                    </span>
+
+
+                    <h2>
+
+                        5 / 5 Oyuncu
+
+                    </h2>
+
+                </div>
+
+
+                <button
+                    class="secondary"
+                    onclick="showPage('home')">
+
+                    Çık
+
+                </button>
+
+
+            </div>
+
+
+            <div
+                id="messages"
+                class="messages">
+
+
+                <div>
+
+                    <b>Sistem</b>
+
+                    <span>
+
+                        Odaya hoş geldiniz.
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="message-box">
+
+
+                <input
+                    id="msg"
+                    placeholder="Mesaj yaz..."
+                    onkeydown="if(event.key==='Enter')sendMsg()">
+
+
+                <button
+                    class="primary"
+                    onclick="sendMsg()">
+
+                    Gönder
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+        <aside class="team">
+
+
+            <h3>
+
+                TAKIM
+
+            </h3>
+
+
+            <div class="member">
+
+                <b>Smyk</b>
+
+                <small>
+
+                    Elmas 2 • Duelist
+
+                </small>
+
+                <em>
+
+                    Valorant ID: Smyk#1234
+
+                </em>
+
+            </div>
+
+
+            <div class="member">
+
+                <b>Player02</b>
+
+                <small>
+
+                    Elmas 1 • Controller
+
+                </small>
+
+                <em>
+
+                    Valorant ID: Player02#5678
+
+                </em>
+
+            </div>
+
+
+            <div class="member">
+
+                <b>Player03</b>
+
+                <small>
+
+                    Elmas 3 • Initiator
+
+                </small>
+
+                <em>
+
+                    Valorant ID: Player03#1111
+
+                </em>
+
+            </div>
+
+
+            <div class="member">
+
+                <b>Player04</b>
+
+                <small>
+
+                    Elmas 2 • Sentinel
+
+                </small>
+
+                <em>
+
+                    Valorant ID: Player04#2222
+
+                </em>
+
+            </div>
+
+
+            <div class="member">
+
+                <b>Player05</b>
+
+                <small>
+
+                    Yücelik 1 • Flex
+
+                </small>
+
+                <em>
+
+                    Valorant ID: Player05#3333
+
+                </em>
+
+            </div>
+
+
+        </aside>
+
+
+    </div>
+
+
+</section>
+
+
+</main>
+
+
+<footer>
+
+    VALO TAKIM • İlk MVP prototipi •
+    Riot Games ile bağlantılı değildir.
+
+</footer>
+
+
+<script src="app.js"></script>
+
+
+</body>
+
+</html>
