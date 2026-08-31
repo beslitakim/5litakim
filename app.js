@@ -34,18 +34,21 @@ function switchPage(pageId) {
     }
 }
 
-// Riot veya Google ile Sosyal Giriş
+// TEST AŞAMALI SOSYAL GİRİŞ (HATA TESPİTİ İÇİN)
 async function socialLogin(provider) {
+    alert("Bağlantı başlatılıyor... Lütfen bekleyin."); // 1. Aşama Testi
     try {
-        const res = await fetch(`${API_URL}/social-login`, {
+        const res = await fetch(`/api/social-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ provider })
         });
         
+        alert("Sunucudan cevap geldi! Durum kodu: " + res.status); // 2. Aşama Testi
+
         if (!res.ok) {
             const errText = await res.text();
-            throw new Error(`Sunucu Yanıtı: ${res.status} -${errText}`);
+            throw new Error(`Sunucu Hatası: ${res.status} - ${errText}`);
         }
 
         const result = await res.json();
@@ -54,13 +57,12 @@ async function socialLogin(provider) {
             localStorage.setItem('valotakim_logged', result.user.username);
             checkAuthState();
             switchPage('home');
-            alert(`${provider} ile başarıyla giriş yapıldı!`);
+            alert(`Giriş Başarılı! Hoş geldin, ${result.user.username}`); // Başarı
         } else {
-            alert('Giriş başarısız!');
+            alert('Giriş reddedildi!');
         }
     } catch (err) {
-        console.error("Giriş Detayı:", err);
-        alert(`Bağlantı hatası! Tarayıcı önbelleğini temizleyin.\nDetay: ${err.message}`);
+        alert(`Sistem Hatası:\n${err.message}`); // Hata Yakalama
     }
 }
 
@@ -253,4 +255,177 @@ async function loadRooms() {
                         chatHtml += `
                             <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
                                 <strong style="color: #4ade80;">🔒 Oda Kilitlendi! Eşleşen Oyuncular:</strong>
-                                <div style="display: flex; justify-content: space-between; margin-top: 8px;
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: #fff;">
+                                    <span>👤 ${room.username}: <strong>${room.owner_valorant_id}</strong></span>
+                                    <span>👤 ${lockedUser}: <strong>${room.locked_valorant_id}</strong></span>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end;">
+                                    ${isOwner ? 
+                                        `<button class="btn-added-check ${room.ownerAdded ? 'checked' : ''}" onclick="markAsAdded(${room.id}, 'owner')">${room.ownerAdded ? '✓ Ekledim' : 'Ekledim'}</button>` : 
+                                        `<button class="btn-added-check ${room.guestAdded ? 'checked' : ''}" onclick="markAsAdded(${room.id}, 'guest')">${room.guestAdded ? '✓ Ekledim' : 'Ekledim'}</button>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (isOwner && !lockedUser) {
+                    chatHtml += `<div style="font-size:12px; font-weight:bold; color:#cbd5e1; margin-top:5px;">Odaya Girenler:</div><div class="participants-management-list">`;
+                    if (participants.length === 0) {
+                        chatHtml += `<span style="font-size:12px; color:#666e7b;">Henüz odaya giren kimse yok.</span>`;
+                    } else {
+                        participants.forEach(pUser => {
+                            chatHtml += `
+                                <div class="participant-row">
+                                    <div class="participant-info">
+                                        <div class="participant-avatar"><img src="images/logo.png" style="width:100%; height:100%; object-fit:cover;"></div>
+                                        <div><span style="font-weight:bold; font-size:13px; color:#fff;">${pUser}</span></div>
+                                    </div>
+                                    <div class="participant-actions">
+                                        <button class="btn-green-accept" onclick="handleParticipantAction(${room.id}, '${pUser}', 'accept')" title="Kabul Et">+</button>
+                                        <button class="btn-red-reject" onclick="handleParticipantAction(${room.id}, '${pUser}', 'reject')" title="Reddet">-</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    chatHtml += `</div>`;
+                }
+
+                chatHtml += `<div class="chat-messages-area">`;
+                if (messages.length === 0) {
+                    chatHtml += `<span style="font-size:12px; color:#666e7b; text-align:center; margin:auto;">Sohbet aktif. Konuşmaya başlayın!</span>`;
+                } else {
+                    messages.forEach(m => {
+                        chatHtml += `<div class="chat-msg-item"><strong>${m.user}:</strong> ${m.text}</div>`;
+                    });
+                }
+                chatHtml += `</div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input-${room.id}" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter') sendRoomMessage(${room.id})">
+                        <button class="primary small" onclick="sendRoomMessage(${room.id})">Gönder</button>
+                    </div>
+                </div>`;
+
+                html += `
+                    <div class="room-card-custom" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div class="room-left-info">
+                                <div class="room-user-avatar"><img src="images/logo.png" alt="Logo"></div>
+                                <div>
+                                    <span class="room-username-txt">${room.username}</span>
+                                    <span class="room-rank-txt">Rank: ${room.rank} | Not: ${room.description || 'Yok'}</span>
+                                </div>
+                            </div>
+                            <div class="room-middle-agents">${agentImgs}</div>
+                            <div class="room-right-action">
+                                <span class="badge red">${room.mode}</span>
+                                <button class="primary small" onclick="joinRoom(${room.id})">${inRoom ? 'Odadasın' : 'Odaya Katıl'}</button>
+                            </div>
+                        </div>
+                        ${inRoom ? chatHtml : ''}
+                    </div>
+                `;
+            });
+        }
+        roomsList.innerHTML = html;
+    } catch (err) { 
+        console.error("Oda yükleme hatası:", err);
+    }
+}
+
+async function joinRoom(roomId) {
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/join`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
+}
+
+async function sendRoomMessage(roomId) {
+    const input = document.getElementById(`chat-input-${roomId}`);
+    if (!input || !input.value.trim()) return;
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ text: input.value.trim() })
+        });
+        input.value = '';
+        loadRooms();
+    } catch(err) { console.error(err); }
+}
+
+async function handleParticipantAction(roomId, username, action) {
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ username, action })
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
+}
+
+async function markAsAdded(roomId, userType) {
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/added`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ userType })
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
+}
+
+async function loadMatchmaking() {
+    const results = document.getElementById('matchmaking-results');
+    if (!results) return;
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/matchmaking`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(!res.ok) throw new Error("Sunucu yanıt vermedi.");
+        const result = await res.json();
+        
+        if (!result.success) {
+            results.innerHTML = `<p class="muted">Eşleşme yapılamadı.</p>`;
+            return;
+        }
+
+        let html = `<h3>Senin Rankın: ${result.searchRank} (Akıllı Eşleşme Aralığı)</h3><div class="rooms" style="margin-top:15px;">`;
+        
+        if(result.players.length === 0) {
+            html += `<p class="muted">Kriterlerine uygun aktif oyuncu bulunamadı.</p>`;
+        } else {
+            result.players.forEach(u => {
+                html += `
+                    <div class="room-card-custom">
+                        <div class="room-left-info">
+                            <div class="room-user-avatar"><img src="images/logo.png"></div>
+                            <div>
+                                <span class="room-username-txt">${u.username} (${u.valorant_id})</span>
+                                <span class="room-rank-txt">Rank: ${u.rank} | Rol: ${u.role}</span>
+                            </div>
+                        </div>
+                        <div class="room-right-action">
+                            <button class="primary small" onclick="alert('${u.username} adlı kullanıcıya davet gönderildi!')">Davet Gönder</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        html += `</div>`;
+        results.innerHTML = html;
+    } catch (err) { 
+        console.error("Eşleşme hatası:", err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthState();
+    if(document.getElementById('rooms-list')) loadRooms();
+});
