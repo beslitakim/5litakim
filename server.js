@@ -11,7 +11,7 @@ const ROOM_LIFETIME_SECONDS = 600;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(__dirname)); // Statik dosyalar için
 
 const db = new Database(":memory:");
 db.pragma("foreign_keys = ON");
@@ -79,11 +79,10 @@ function cleanupExpiredRooms() {
 }
 setInterval(cleanupExpiredRooms, 5000);
 
-// Sosyal Giriş Rotası
+// --- EKSİK OLAN SOSYAL GİRİŞ ROTASI ---
 app.post("/api/social-login", (req, res) => {
     try {
         const { provider } = req.body;
-        
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         let username = provider === 'Riot' ? `RiotOyuncusu#${randomNum}` : `GoogleKullanicisi#${randomNum}`;
         let valorant_id = provider === 'Riot' ? `Riot#${randomNum}` : `Google#${randomNum}`;
@@ -214,4 +213,4 @@ app.get("/api/matchmaking", authenticateToken, (req, res) => {
     res.json({ success: true, searchRank: currentUser.rank, players: matched });
 });
 
-app.listen(PORT, () => { console.log(`Sunucu aktif: http://localhost:${PORT}`); });
+app.listen(PORT, () => { console.log(`Sunucu aktif: ${PORT}`); });
