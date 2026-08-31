@@ -11,7 +11,7 @@ const ROOM_LIFETIME_SECONDS = 600;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../")));
+app.use(express.static(__dirname));
 
 const db = new Database(":memory:");
 db.pragma("foreign_keys = ON");
@@ -79,7 +79,7 @@ function cleanupExpiredRooms() {
 }
 setInterval(cleanupExpiredRooms, 5000);
 
-// Sosyal Giriş / Otomatik Kayıt Rotası
+// Sosyal Giriş Rotası
 app.post("/api/social-login", (req, res) => {
     try {
         const { provider } = req.body;

@@ -1,6 +1,7 @@
+// API Adresini canlı site için kesin olarak belirliyoruz
 const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://localhost:3000/api" 
-    : "/api";
+    : "https://fivelitakim.onrender.com/api";
 
 let roomsInterval = null;
 
@@ -43,6 +44,11 @@ async function socialLogin(provider) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ provider })
         });
+        
+        if (!res.ok) {
+            throw new Error(`Sunucu Hatası: ${res.status}`);
+        }
+
         const result = await res.json();
         if (result.success) {
             localStorage.setItem('valotakim_token', result.token);
@@ -54,7 +60,8 @@ async function socialLogin(provider) {
             alert('Giriş başarısız!');
         }
     } catch (err) {
-        alert('Bağlantı hatası!');
+        console.error("Giriş Detayı:", err);
+        alert(`Bağlantı hatası! Hata detayı: ${err.message}`);
     }
 }
 
@@ -92,13 +99,17 @@ function checkAuthAndOpenCreateRoom() {
 async function loadProfileData() {
     const token = getToken();
     if (!token) return;
-    const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
-    const result = await res.json();
-    if (result.success) {
-        document.getElementById('prof-username').value = result.user.username;
-        document.getElementById('prof-valorant').value = result.user.valorant_id || '';
-        document.getElementById('prof-rank').value = result.user.rank || 'Gümüş 1';
-        document.getElementById('prof-role').value = result.user.role || 'Flex';
+    try {
+        const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const result = await res.json();
+        if (result.success) {
+            document.getElementById('prof-username').value = result.user.username;
+            document.getElementById('prof-valorant').value = result.user.valorant_id || '';
+            document.getElementById('prof-rank').value = result.user.rank || 'Gümüş 1';
+            document.getElementById('prof-role').value = result.user.role || 'Flex';
+        }
+    } catch(err) {
+        console.error(err);
     }
 }
 
@@ -110,13 +121,17 @@ async function updateProfile(event) {
         rank: document.getElementById('prof-rank').value,
         role: document.getElementById('prof-role').value
     };
-    await fetch(`${API_URL}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(data)
-    });
-    alert('Profil güncellendi!');
-    switchPage('home');
+    try {
+        await fetch(`${API_URL}/profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(data)
+        });
+        alert('Profil güncellendi!');
+        switchPage('home');
+    } catch(err) {
+        alert("Güncelleme hatası!");
+    }
 }
 
 const agentNames = [
@@ -179,14 +194,19 @@ async function createRoom(event) {
         agents: selectedAgents
     };
 
-    const res = await fetch(`${API_URL}/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify(data)
-    });
-    if ((await res.json()).success) {
-        alert('İlan başarıyla yayınlandı!');
-        switchPage('rooms');
+    try {
+        const res = await fetch(`${API_URL}/rooms`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert('İlan başarıyla yayınlandı!');
+            switchPage('rooms');
+        }
+    } catch(err) {
+        alert('İlan açılırken hata oluştu!');
     }
 }
 
@@ -198,6 +218,7 @@ async function loadRooms() {
 
     try {
         const res = await fetch(`${API_URL}/rooms`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(!res.ok) throw new Error("Sunucu yanıt vermedi.");
         const result = await res.json();
         
         let html = '';
@@ -308,45 +329,55 @@ async function loadRooms() {
             });
         }
         roomsList.innerHTML = html;
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+        console.error("Oda yükleme hatası:", err);
+    }
 }
 
 async function joinRoom(roomId) {
-    await fetch(`${API_URL}/rooms/${roomId}/join`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
-    loadRooms();
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/join`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
 }
 
 async function sendRoomMessage(roomId) {
     const input = document.getElementById(`chat-input-${roomId}`);
     if (!input || !input.value.trim()) return;
-    await fetch(`${API_URL}/rooms/${roomId}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ text: input.value.trim() })
-    });
-    input.value = '';
-    loadRooms();
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ text: input.value.trim() })
+        });
+        input.value = '';
+        loadRooms();
+    } catch(err) { console.error(err); }
 }
 
 async function handleParticipantAction(roomId, username, action) {
-    await fetch(`${API_URL}/rooms/${roomId}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ username, action })
-    });
-    loadRooms();
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ username, action })
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
 }
 
 async function markAsAdded(roomId, userType) {
-    await fetch(`${API_URL}/rooms/${roomId}/added`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ userType })
-    });
-    loadRooms();
+    try {
+        await fetch(`${API_URL}/rooms/${roomId}/added`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({ userType })
+        });
+        loadRooms();
+    } catch(err) { console.error(err); }
 }
 
 async function loadMatchmaking() {
@@ -356,6 +387,7 @@ async function loadMatchmaking() {
 
     try {
         const res = await fetch(`${API_URL}/matchmaking`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(!res.ok) throw new Error("Sunucu yanıt vermedi.");
         const result = await res.json();
         
         if (!result.success) {
@@ -387,7 +419,9 @@ async function loadMatchmaking() {
         }
         html += `</div>`;
         results.innerHTML = html;
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+        console.error("Eşleşme hatası:", err);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
