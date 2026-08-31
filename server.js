@@ -7,7 +7,6 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar";
-const ROOM_LIFETIME_SECONDS = 600;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -37,14 +36,10 @@ db.exec(`
         participants TEXT DEFAULT '[]',
         messages TEXT DEFAULT '[]',
         lockedUser TEXT,
-        ownerAdded INTEGER DEFAULT 0,
-        guestAdded INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 `);
-
-const RANK_ORDER = ["Demir 1", "Demir 2", "Demir 3", "Bronz 1", "Bronz 2", "Bronz 3", "Gümüş 1", "Gümüş 2", "Gümüş 3", "Altın 1", "Altın 2", "Altın 3", "Platin 1", "Platin 2", "Platin 3", "Elmas 1", "Elmas 2", "Elmas 3", "Yücelik 1", "Yücelik 2", "Yücelik 3", "Ölümsüzlük 1", "Ölümsüzlük 2", "Ölümsüzlük 3", "Radiant"];
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -56,19 +51,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-function cleanupExpiredRooms() {
-    try {
-        const rooms = db.prepare(`SELECT id, created_at FROM rooms`).all();
-        for (const room of rooms) {
-            const createdTime = new Date(String(room.created_at).replace(" ", "T") + "Z").getTime();
-            if (Math.floor((Date.now() - createdTime) / 1000) >= ROOM_LIFETIME_SECONDS) {
-                db.prepare(`DELETE FROM rooms WHERE id = ?`).run(room.id);
-            }
-        }
-    } catch (e) { console.error(e); }
-}
-setInterval(cleanupExpiredRooms, 5000);
-
+// === SOSYAL GİRİŞ (DOĞRU VE GERÇEK ROTA) ===
 app.post("/api/social-login", (req, res) => {
     try {
         const { provider } = req.body;
@@ -89,6 +72,7 @@ app.post("/api/social-login", (req, res) => {
     }
 });
 
+// === PROFİL VE ODA ROTALARI ===
 app.get("/api/profile", authenticateToken, (req, res) => {
     const user = db.prepare(`SELECT id, username, valorant_id, rank, role FROM users WHERE id = ?`).get(req.user.id);
     res.json({ success: true, user });
@@ -102,16 +86,11 @@ app.put("/api/profile", authenticateToken, (req, res) => {
 
 app.get("/api/rooms", authenticateToken, (req, res) => {
     try {
-        cleanupExpiredRooms();
         const rooms = db.prepare(`SELECT rooms.*, users.username, users.valorant_id as owner_valorant_id, users.rank FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC`).all().map(r => {
-            const createdTime = new Date(String(r.created_at).replace(" ", "T") + "Z").getTime();
-            const elapsed = Math.floor((Date.now() - createdTime) / 1000);
             return {
                 ...r,
                 agents: JSON.parse(r.agents || '[]'),
-                participants: JSON.parse(r.participants || '[]'),
-                messages: JSON.parse(r.messages || '[]'),
-                remaining_seconds: Math.max(0, ROOM_LIFETIME_SECONDS - elapsed)
+                participants: JSON.parse(r.participants || '[]')
             };
         });
         res.json({ success: true, rooms });
@@ -121,6 +100,18 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
 app.post("/api/rooms", authenticateToken, (req, res) => {
     const { mode, age, description, agents } = req.body;
     db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents) VALUES (?, ?, ?, ?, ?)`).run(req.user.id, mode, age, description, JSON.stringify(agents));
+    res.json({ success: true });
+});
+
+app.post("/api/rooms/:id/join", authenticateToken, (req, res) => {
+    const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
+    if (!room) return res.json({ success: false });
+    let participants = JSON.parse(room.participants || '[]');
+    const currentUser = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id).username;
+    if (!participants.includes(currentUser) && room.user_id !== req.user.id) {
+        participants.push(currentUser);
+        db.prepare(`UPDATE rooms SET participants = ? WHERE id = ?`).run(JSON.stringify(participants), req.params.id);
+    }
     res.json({ success: true });
 });
 
