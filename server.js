@@ -8,7 +8,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar-2026";
-const ROOM_LIFETIME_SECONDS = 600; // 10 Dakika (Saniye cinsinden)
+const ROOM_LIFETIME_SECONDS = 600; // 10 Dakika otomatik temizleme süresi
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -37,10 +37,25 @@ db.exec(`
         agents TEXT,
         participants TEXT DEFAULT '[]',
         messages TEXT DEFAULT '[]',
+        lockedUser TEXT,
+        ownerAdded INTEGER DEFAULT 0,
+        guestAdded INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 `);
+
+const RANK_ORDER = [
+    "Demir 1", "Demir 2", "Demir 3",
+    "Bronz 1", "Bronz 2", "Bronz 3",
+    "Gümüş 1", "Gümüş 2", "Gümüş 3",
+    "Altın 1", "Altın 2", "Altın 3",
+    "Platin 1", "Platin 2", "Platin 3",
+    "Elmas 1", "Elmas 2", "Elmas 3",
+    "Yücelik 1", "Yücelik 2", "Yücelik 3",
+    "Ölümsüzlük 1", "Ölümsüzlük 2", "Ölümsüzlük 3",
+    "Radiant"
+];
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -52,14 +67,12 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Süresi dolan odaları otomatik temizleme fonksiyonu
 function cleanupExpiredRooms() {
     try {
         const rooms = db.prepare(`SELECT id, created_at FROM rooms`).all();
         for (const room of rooms) {
             const createdTime = new Date(String(room.created_at).replace(" ", "T") + "Z").getTime();
-            const elapsed = Math.floor((Date.now() - createdTime) / 1000);
-            if (elapsed >= ROOM_LIFETIME_SECONDS) {
+            if (Math.floor((Date.now() - createdTime) / 1000) >= ROOM_LIFETIME_SECONDS) {
                 db.prepare(`DELETE FROM rooms WHERE id = ?`).run(room.id);
             }
         }
@@ -74,7 +87,7 @@ app.post("/api/register", async (req, res) => {
         db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password) VALUES (?, ?, ?, ?, ?)`).run(username, valorant_id, rank, role, hashedPassword);
         res.json({ success: true });
     } catch (err) {
-        res.status(400).json({ success: false, message: "Kullanıcı adı alınmış." });
+        res.status(400).json({ success: false, message: "Kullanıcı adı sistemde zaten kayıtlı." });
     }
 });
 
@@ -82,7 +95,7 @@ app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
     if (!user || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ success: false, message: "Hatalı bilgi." });
+        return res.status(401).json({ success: false, message: "Hatalı kullanıcı adı veya şifre." });
     }
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token, user });
@@ -99,7 +112,7 @@ app.put("/api/profile", authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// İlanları Listeleme (Kalan süre hesaplamasıyla)
+// İlanlar API
 app.get("/api/rooms", authenticateToken, (req, res) => {
     try {
         cleanupExpiredRooms();
@@ -111,17 +124,24 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
             const elapsed = Math.floor((Date.now() - createdTime) / 1000);
             const remaining_seconds = Math.max(0, ROOM_LIFETIME_SECONDS - elapsed);
 
+            let lockedValId = null;
+            if (r.lockedUser) {
+                let gUser = db.prepare(`SELECT valorant_id FROM users WHERE username = ?`).get(r.lockedUser);
+                lockedValId = gUser ? gUser.valorant_id : null;
+            }
+
             return {
                 ...r,
                 agents: JSON.parse(r.agents || '[]'),
                 participants: JSON.parse(r.participants || '[]'),
                 messages: JSON.parse(r.messages || '[]'),
-                remaining_seconds
+                remaining_seconds,
+                locked_valorant_id: lockedValId
             };
         });
         res.json({ success: true, rooms });
     } catch (err) {
-        res.status(500).json({ success: false, message: "İlanlar alınamadı." });
+        res.status(500).json({ success: false, message: "İlanlar yüklenemedi." });
     }
 });
 
@@ -135,7 +155,7 @@ app.post("/api/rooms", authenticateToken, (req, res) => {
 
 app.post("/api/rooms/:id/join", authenticateToken, (req, res) => {
     const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
-    if (!room) return res.json({ success: false });
+    if (!room || room.lockedUser) return res.json({ success: false });
     let participants = JSON.parse(room.participants || '[]');
     const currentUser = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id).username;
     
@@ -155,6 +175,44 @@ app.post("/api/rooms/:id/message", authenticateToken, (req, res) => {
     messages.push({ user: currentUser, text: req.body.text });
     db.prepare(`UPDATE rooms SET messages = ? WHERE id = ?`).run(JSON.stringify(messages), req.params.id);
     res.json({ success: true });
+});
+
+app.post("/api/rooms/:id/action", authenticateToken, (req, res) => {
+    const { username, action } = req.body;
+    if (action === 'reject') {
+        db.prepare(`DELETE FROM rooms WHERE id = ?`).run(req.params.id);
+    } else if (action === 'accept') {
+        db.prepare(`UPDATE rooms SET lockedUser = ? WHERE id = ?`).run(username, req.params.id);
+    }
+    res.json({ success: true });
+});
+
+app.post("/api/rooms/:id/added", authenticateToken, (req, res) => {
+    const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
+    if (!room) return res.json({ success: false });
+
+    if (req.body.userType === 'owner') db.prepare(`UPDATE rooms SET ownerAdded = 1 WHERE id = ?`).run(req.params.id);
+    if (req.body.userType === 'guest') db.prepare(`UPDATE rooms SET guestAdded = 1 WHERE id = ?`).run(req.params.id);
+
+    const updated = db.prepare(`SELECT ownerAdded, guestAdded FROM rooms WHERE id = ?`).get(req.params.id);
+    if (updated.ownerAdded && updated.guestAdded) {
+        db.prepare(`DELETE FROM rooms WHERE id = ?`).run(req.params.id);
+    }
+    res.json({ success: true });
+});
+
+// Profesyonel Eşleşme (5'li Takım Bul) API'si
+app.get("/api/matchmaking", authenticateToken, (req, res) => {
+    const currentUser = db.prepare(`SELECT rank FROM users WHERE id = ?`).get(req.user.id);
+    const myRankIdx = RANK_ORDER.indexOf(currentUser.rank || "Gümüş 1");
+    
+    const users = db.prepare(`SELECT username, valorant_id, rank, role FROM users WHERE id != ?`).all(req.user.id);
+    const matched = users.filter(u => {
+        const uIdx = RANK_ORDER.indexOf(u.rank || "Gümüş 1");
+        return Math.abs(uIdx - myRankIdx) <= 3; // Yakın rank aralığı
+    });
+
+    res.json({ success: true, searchRank: currentUser.rank, players: matched });
 });
 
 app.listen(PORT, () => { console.log(`Sunucu aktif: http://localhost:${PORT}`); });

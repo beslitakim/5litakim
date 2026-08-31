@@ -23,9 +23,12 @@ function switchPage(pageId) {
     }
     if (pageId === 'rooms') {
         loadRooms();
-        if(!roomsInterval) roomsInterval = setInterval(loadRooms, 3000); // Her 3 saniyede bir güncel sohbetleri ve sayacı yenile
+        if(!roomsInterval) roomsInterval = setInterval(loadRooms, 3000);
     } else {
         if(roomsInterval) { clearInterval(roomsInterval); roomsInterval = null; }
+    }
+    if (pageId === 'matchmaking') {
+        loadMatchmaking();
     }
 }
 
@@ -44,7 +47,7 @@ async function registerUser(event) {
             alert('Kayıt başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
             switchPage('login');
         } else { alert(result.message || 'Kayıt başarısız!'); }
-    } catch (err) { alert('Sunucuya bağlanılamadı!'); }
+    } catch (err) { alert('Sunucu bağlantı hatası!'); }
 }
 
 async function loginUser(event) {
@@ -64,7 +67,7 @@ async function loginUser(event) {
             localStorage.setItem('valotakim_logged', result.user.username);
             checkAuthState();
             switchPage('home');
-            alert('Başarıyla giriş yapıldı: ' + result.user.username);
+            alert('Giriş başarılı: ' + result.user.username);
         } else { alert(result.message || 'Hatalı bilgi!'); }
     } catch (err) { alert('Bağlantı hatası!'); }
 }
@@ -187,7 +190,7 @@ async function createRoom(event) {
     const data = {
         mode: formData.get('mode'),
         age: formData.get('age'),
-        microphone: formData.get('microphone') ? 1 : 0,
+        microphone: formData.get('microphone'] ? 1 : 0,
         description: formData.get('description'),
         agents: selectedAgents
     };
@@ -198,12 +201,12 @@ async function createRoom(event) {
         body: JSON.stringify(data)
     });
     if ((await res.json()).success) {
-        alert('İlan yayınlandı! Oda aktif.');
+        alert('İlan başarıyla yayınlandı!');
         switchPage('rooms');
     }
 }
 
-// İlanlar ve 10 Dakikalık Geri Sayımlı Sohbet Odaları
+// Profesyonel İlanlar ve Oda Yönetimi
 async function loadRooms() {
     const roomsList = document.getElementById('rooms-list');
     if (!roomsList) return;
@@ -227,9 +230,9 @@ async function loadRooms() {
                 let isOwner = (loggedUser === room.username);
                 let participants = room.participants || [];
                 let messages = room.messages || [];
+                let lockedUser = room.lockedUser || null;
                 let inRoom = participants.includes(loggedUser) || isOwner;
 
-                // 10 Dakika Geri Sayım Formatı (MM:SS)
                 let minutes = Math.floor(room.remaining_seconds / 60);
                 let seconds = room.remaining_seconds % 60;
                 let timeFormatted = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
@@ -237,28 +240,68 @@ async function loadRooms() {
                 let chatHtml = `
                     <div class="room-chat-box">
                         <div style="font-weight: bold; color: #a855f7; display:flex; justify-content:space-between; align-items:center;">
-                            <span>💬 Genel Oda Sohbeti (Herkes Konuşabilir)</span>
-                            <span style="font-size:13px; color:#ef4444; font-weight:800; background:rgba(239,68,68,0.1); padding:4px 10px; border-radius:6px;">⏳ Kapanmaya Kalan: ${timeFormatted}</span>
+                            <span>💬 Oda Sohbeti ve Yönetim</span>
+                            <span style="font-size:12px; color:#ef4444; background:rgba(239,68,68,0.1); padding:4px 8px; border-radius:6px;">⏳ Kalan Süre: ${timeFormatted}</span>
                         </div>
-                        <div class="chat-messages-area">
                 `;
 
+                if (lockedUser) {
+                    if (isOwner || loggedUser === lockedUser) {
+                        chatHtml += `
+                            <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                <strong style="color: #4ade80;">🔒 Oda Kilitlendi! Eşleşen Oyuncular:</strong>
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: #fff;">
+                                    <span>👤 ${room.username}: <strong>${room.owner_valorant_id}</strong></span>
+                                    <span>👤 ${lockedUser}: <strong>${room.locked_valorant_id}</strong></span>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end;">
+                                    ${isOwner ? 
+                                        `<button class="btn-added-check ${room.ownerAdded ? 'checked' : ''}" onclick="markAsAdded(${room.id}, 'owner')">${room.ownerAdded ? '✓ Ekledim' : 'Ekledim'}</button>` : 
+                                        `<button class="btn-added-check ${room.guestAdded ? 'checked' : ''}" onclick="markAsAdded(${room.id}, 'guest')">${room.guestAdded ? '✓ Ekledim' : 'Ekledim'}</button>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (isOwner && !lockedUser) {
+                    chatHtml += `<div style="font-size:12px; font-weight:bold; color:#cbd5e1; margin-top:5px;">Odaya Girenler:</div><div class="participants-management-list">`;
+                    if (participants.length === 0) {
+                        chatHtml += `<span style="font-size:12px; color:#666e7b;">Henüz odaya giren kimse yok.</span>`;
+                    } else {
+                        participants.forEach(pUser => {
+                            chatHtml += `
+                                <div class="participant-row">
+                                    <div class="participant-info">
+                                        <div class="participant-avatar"><img src="images/logo.png" style="width:100%; height:100%; object-fit:cover;"></div>
+                                        <div><span style="font-weight:bold; font-size:13px; color:#fff;">${pUser}</span></div>
+                                    </div>
+                                    <div class="participant-actions">
+                                        <button class="btn-green-accept" onclick="handleParticipantAction(${room.id}, '${pUser}', 'accept')" title="Kabul Et">+</button>
+                                        <button class="btn-red-reject" onclick="handleParticipantAction(${room.id}, '${pUser}', 'reject')" title="Reddet">-</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    chatHtml += `</div>`;
+                }
+
+                chatHtml += `<div class="chat-messages-area">`;
                 if (messages.length === 0) {
-                    chatHtml += `<span style="font-size:12px; color:#666e7b; text-align:center; margin:auto;">Sohbet odası aktif. Yazmaya başlayın!</span>`;
+                    chatHtml += `<span style="font-size:12px; color:#666e7b; text-align:center; margin:auto;">Sohbet aktif. Konuşmaya başlayın!</span>`;
                 } else {
                     messages.forEach(m => {
                         chatHtml += `<div class="chat-msg-item"><strong>${m.user}:</strong> ${m.text}</div>`;
                     });
                 }
-
-                chatHtml += `
-                        </div>
-                        <div class="chat-input-row">
-                            <input type="text" id="chat-input-${room.id}" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter') sendRoomMessage(${room.id})">
-                            <button class="primary small" onclick="sendRoomMessage(${room.id})">Gönder</button>
-                        </div>
+                chatHtml += `</div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input-${room.id}" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter') sendRoomMessage(${room.id})">
+                        <button class="primary small" onclick="sendRoomMessage(${room.id})">Gönder</button>
                     </div>
-                `;
+                </div>`;
 
                 html += `
                     <div class="room-card-custom" style="flex-direction: column; align-items: stretch; gap: 12px;">
@@ -303,6 +346,66 @@ async function sendRoomMessage(roomId) {
     });
     input.value = '';
     loadRooms();
+}
+
+async function handleParticipantAction(roomId, username, action) {
+    await fetch(`${API_URL}/rooms/${roomId}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        body: JSON.stringify({ username, action })
+    });
+    loadRooms();
+}
+
+async function markAsAdded(roomId, userType) {
+    await fetch(`${API_URL}/rooms/${roomId}/added`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        body: JSON.stringify({ userType })
+    });
+    loadRooms();
+}
+
+// 5'li Takım Eşleşme Fonksiyonu
+async function loadMatchmaking() {
+    const results = document.getElementById('matchmaking-results');
+    if (!results) return;
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/matchmaking`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const result = await res.json();
+        
+        if (!result.success) {
+            results.innerHTML = `<p class="muted">Eşleşme yapılamadı.</p>`;
+            return;
+        }
+
+        let html = `<h3>Senin Rankın: ${result.searchRank} (Akıllı Eşleşme Aralığı)</h3><div class="rooms" style="margin-top:15px;">`;
+        
+        if(result.players.length === 0) {
+            html += `<p class="muted">Kriterlerine uygun aktif oyuncu bulunamadı.</p>`;
+        } else {
+            result.players.forEach(u => {
+                html += `
+                    <div class="room-card-custom">
+                        <div class="room-left-info">
+                            <div class="room-user-avatar"><img src="images/logo.png"></div>
+                            <div>
+                                <span class="room-username-txt">${u.username} (${u.valorant_id})</span>
+                                <span class="room-rank-txt">Rank: ${u.rank} | Rol: ${u.role}</span>
+                            </div>
+                        </div>
+                        <div class="room-right-action">
+                            <button class="primary small" onclick="alert('${u.username} adlı kullanıcıya davet gönderildi!')">Davet Gönder</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        html += `</div>`;
+        results.innerHTML = html;
+    } catch (err) { console.error(err); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
