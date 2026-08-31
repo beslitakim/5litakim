@@ -373,4 +373,33 @@ button { cursor: pointer; }
 .smokgg-footer-text { color: #cbd5e1; font-size: 13px; text-align: center; }
 .smokgg-footer-text strong { color: #a855f7; font-weight: 800; }
 
-footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; border-top: 1px solid #20252e; margin-top: 40px; }
+footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; border-top: 1px solid #20252e; margin-top: 40px; }.room-chat-box {
+    background: #131722;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.chat-messages-area {
+    height: 180px;
+    overflow-y: auto;
+    background: #090b10;
+    border: 1px solid #262c37;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.chat-msg-item {
+    font-size: 13px; color: #f4f5f7;
+    background: rgba(168, 85, 247, 0.12);
+    padding: 6px 10px; border-radius: 6px; width: fit-content;
+}
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input-row input {
+    flex: 1; background: #090b10; border: 1px solid #303642;
+    padding: 10px; border-radius: 8px; color: #fff; outline: none;
+}
