@@ -97,26 +97,30 @@ app.put("/api/profile", authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// İlanlar ve Eşleşme API'leri
+// İlanlar ve Eşleşme API'leri (SELECT ifadesi düzeltildi)
 app.get("/api/rooms", authenticateToken, (req, res) => {
-    const rooms = db.prepare(`
-        rooms.*, users.username, users.valorant_id as owner_valorant_id, users.rank 
-        FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC
-    `).all().map(r => {
-        let lockedValId = null;
-        if (r.lockedUser) {
-            let gUser = db.prepare(`SELECT valorant_id FROM users WHERE username = ?`).get(r.lockedUser);
-            lockedValId = gUser ? gUser.valorant_id : null;
-        }
-        return {
-            ...r,
-            agents: JSON.parse(r.agents || '[]'),
-            participants: JSON.parse(r.participants || '[]'),
-            messages: JSON.parse(r.messages || '[]'),
-            locked_valorant_id: lockedValId
-        };
-    });
-    res.json({ success: true, rooms });
+    try {
+        const rooms = db.prepare(`
+            SELECT rooms.*, users.username, users.valorant_id as owner_valorant_id, users.rank 
+            FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC
+        `).all().map(r => {
+            let lockedValId = null;
+            if (r.lockedUser) {
+                let gUser = db.prepare(`SELECT valorant_id FROM users WHERE username = ?`).get(r.lockedUser);
+                lockedValId = gUser ? gUser.valorant_id : null;
+            }
+            return {
+                ...r,
+                agents: JSON.parse(r.agents || '[]'),
+                participants: JSON.parse(r.participants || '[]'),
+                messages: JSON.parse(r.messages || '[]'),
+                locked_valorant_id: lockedValId
+            };
+        });
+        res.json({ success: true, rooms });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "İlanlar alınamadı." });
+    }
 });
 
 app.post("/api/rooms", authenticateToken, (req, res) => {
@@ -183,7 +187,7 @@ app.get("/api/matchmaking", authenticateToken, (req, res) => {
     const users = db.prepare(`SELECT username, valorant_id, rank, role FROM users WHERE id != ?`).all(req.user.id);
     const matched = users.filter(u => {
         const uIdx = RANK_ORDER.indexOf(u.rank || "Gümüş 1");
-        return Math.abs(uIdx - myRankIdx) <= 3; // 3 rank altı veya üstü akıllı eşleşme aralığı
+        return Math.abs(uIdx - myRankIdx) <= 3;
     });
 
     res.json({ success: true, searchRank: currentUser.rank, players: matched });
