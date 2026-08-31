@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Database = require("better-sqlite3");
 const path = require("path");
@@ -8,7 +7,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar-2026";
-const ROOM_LIFETIME_SECONDS = 600; // 10 Dakika otomatik temizleme süresi
+const ROOM_LIFETIME_SECONDS = 600;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -23,8 +22,7 @@ db.exec(`
         username TEXT NOT NULL UNIQUE,
         valorant_id TEXT NOT NULL,
         rank TEXT NOT NULL,
-        role TEXT NOT NULL,
-        password TEXT NOT NULL
+        role TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS rooms (
@@ -80,23 +78,18 @@ function cleanupExpiredRooms() {
 }
 setInterval(cleanupExpiredRooms, 5000);
 
-app.post("/api/register", async (req, res) => {
-    try {
-        const { username, valorant_id, rank, role, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password) VALUES (?, ?, ?, ?, ?)`).run(username, valorant_id, rank, role, hashedPassword);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(400).json({ success: false, message: "Kullanıcı adı sistemde zaten kayıtlı." });
-    }
-});
+// Sosyal Giriş / Otomatik Kayıt Rotası
+app.post("/api/social-login", (req, res) => {
+    const { provider } = req.body;
+    let username = provider === 'Riot' ? "RiotPlayer#TR1" : "GoogleUser";
+    let valorant_id = provider === 'Riot' ? "Agent#0001" : "User#GGL";
 
-app.post("/api/login", async (req, res) => {
-    const { username, password } = req.body;
-    const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ success: false, message: "Hatalı kullanıcı adı veya şifre." });
+    let user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
+    if (!user) {
+        const result = db.prepare(`INSERT INTO users (username, valorant_id, rank, role) VALUES (?, ?, 'Gümüş 1', 'Flex')`).run(username, valorant_id);
+        user = { id: result.lastInsertRowid, username, valorant_id, rank: 'Gümüş 1', role: 'Flex' };
     }
+
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token, user });
 });
@@ -112,7 +105,6 @@ app.put("/api/profile", authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// İlanlar API
 app.get("/api/rooms", authenticateToken, (req, res) => {
     try {
         cleanupExpiredRooms();
@@ -201,7 +193,6 @@ app.post("/api/rooms/:id/added", authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// Profesyonel Eşleşme (5'li Takım Bul) API'si
 app.get("/api/matchmaking", authenticateToken, (req, res) => {
     const currentUser = db.prepare(`SELECT rank FROM users WHERE id = ?`).get(req.user.id);
     const myRankIdx = RANK_ORDER.indexOf(currentUser.rank || "Gümüş 1");
@@ -209,7 +200,7 @@ app.get("/api/matchmaking", authenticateToken, (req, res) => {
     const users = db.prepare(`SELECT username, valorant_id, rank, role FROM users WHERE id != ?`).all(req.user.id);
     const matched = users.filter(u => {
         const uIdx = RANK_ORDER.indexOf(u.rank || "Gümüş 1");
-        return Math.abs(uIdx - myRankIdx) <= 3; // Yakın rank aralığı
+        return Math.abs(uIdx - myRankIdx) <= 3;
     });
 
     res.json({ success: true, searchRank: currentUser.rank, players: matched });

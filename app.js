@@ -1,4 +1,7 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+    ? "http://localhost:3000/api" 
+    : "/api";
+
 let roomsInterval = null;
 
 function getToken() {
@@ -32,34 +35,13 @@ function switchPage(pageId) {
     }
 }
 
-async function registerUser(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
+// Riot veya Google ile Sosyal Giriş
+async function socialLogin(provider) {
     try {
-        const res = await fetch(`${API_URL}/register`, {
+        const res = await fetch(`${API_URL}/social-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (result.success) {
-            alert('Kayıt başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
-            switchPage('login');
-        } else { alert(result.message || 'Kayıt başarısız!'); }
-    } catch (err) { alert('Sunucu bağlantı hatası!'); }
-}
-
-async function loginUser(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
-    
-    try {
-        const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ provider })
         });
         const result = await res.json();
         if (result.success) {
@@ -67,9 +49,13 @@ async function loginUser(event) {
             localStorage.setItem('valotakim_logged', result.user.username);
             checkAuthState();
             switchPage('home');
-            alert('Giriş başarılı: ' + result.user.username);
-        } else { alert(result.message || 'Hatalı bilgi!'); }
-    } catch (err) { alert('Bağlantı hatası!'); }
+            alert(`${provider} ile başarıyla giriş yapıldı!`);
+        } else {
+            alert('Giriş başarısız!');
+        }
+    } catch (err) {
+        alert('Bağlantı hatası!');
+    }
 }
 
 function logout() {
@@ -97,8 +83,7 @@ function checkAuthState() {
 
 function checkAuthAndOpenCreateRoom() {
     if (!getToken()) {
-        alert('İlan oluşturmak için giriş yapmalısınız!');
-        switchPage('login');
+        alert('İlan oluşturmak için Riot veya Google ile giriş yapmalısınız!');
         return;
     }
     switchPage('create-room');
@@ -134,7 +119,6 @@ async function updateProfile(event) {
     switchPage('home');
 }
 
-// Ajan Seçim Mantığı
 const agentNames = [
     "ASTRA", "BREACH", "BRIMSTONE", "CHAMBER", "KILLJOY", 
     "OMEN", "CYPHER", "GEKKO", "JETT", "KAYO", 
@@ -190,7 +174,7 @@ async function createRoom(event) {
     const data = {
         mode: formData.get('mode'),
         age: formData.get('age'),
-        microphone: formData.get('microphone'] ? 1 : 0,
+        microphone: formData.get('microphone') ? 1 : 0,
         description: formData.get('description'),
         agents: selectedAgents
     };
@@ -206,7 +190,6 @@ async function createRoom(event) {
     }
 }
 
-// Profesyonel İlanlar ve Oda Yönetimi
 async function loadRooms() {
     const roomsList = document.getElementById('rooms-list');
     if (!roomsList) return;
@@ -366,7 +349,6 @@ async function markAsAdded(roomId, userType) {
     loadRooms();
 }
 
-// 5'li Takım Eşleşme Fonksiyonu
 async function loadMatchmaking() {
     const results = document.getElementById('matchmaking-results');
     if (!results) return;
