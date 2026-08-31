@@ -22,7 +22,8 @@ db.exec(`
         username TEXT NOT NULL UNIQUE,
         valorant_id TEXT NOT NULL,
         rank TEXT NOT NULL,
-        role TEXT NOT NULL
+        role TEXT NOT NULL,
+        password TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS rooms (
@@ -80,18 +81,25 @@ setInterval(cleanupExpiredRooms, 5000);
 
 // Sosyal Giriş / Otomatik Kayıt Rotası
 app.post("/api/social-login", (req, res) => {
-    const { provider } = req.body;
-    let username = provider === 'Riot' ? "RiotPlayer#TR1" : "GoogleUser";
-    let valorant_id = provider === 'Riot' ? "Agent#0001" : "User#GGL";
+    try {
+        const { provider } = req.body;
+        
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        let username = provider === 'Riot' ? `RiotOyuncusu#${randomNum}` : `GoogleKullanicisi#${randomNum}`;
+        let valorant_id = provider === 'Riot' ? `Riot#${randomNum}` : `Google#${randomNum}`;
 
-    let user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
-    if (!user) {
-        const result = db.prepare(`INSERT INTO users (username, valorant_id, rank, role) VALUES (?, ?, 'Gümüş 1', 'Flex')`).run(username, valorant_id);
-        user = { id: result.lastInsertRowid, username, valorant_id, rank: 'Gümüş 1', role: 'Flex' };
+        let user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
+        if (!user) {
+            const result = db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password) VALUES (?, ?, 'Gümüş 1', 'Flex', 'social_dummy_pass')`).run(username, valorant_id);
+            user = { id: result.lastInsertRowid, username, valorant_id, rank: 'Gümüş 1', role: 'Flex' };
+        }
+
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
+        res.json({ success: true, token, user });
+    } catch (error) {
+        console.error("Sosyal giriş hatası:", error);
+        res.status(500).json({ success: false, message: "Sunucu veritabanı hatası!" });
     }
-
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
-    res.json({ success: true, token, user });
 });
 
 app.get("/api/profile", authenticateToken, (req, res) => {
