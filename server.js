@@ -1,288 +1,297 @@
-const express = require("express");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const Database = require("better-sqlite3");
-const path = require("path");
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const Database = require('better-sqlite3');
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar-2026";
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin123";
+const PORT = 3000;
+const JWT_SECRET = 'valotakim_gizli_anahtar_2026';
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
-// DOSYA TABANLI VERİTABANI (Render'da kalıcı)
-const dbPath = path.join(__dirname, "valotakim.db");
-const db = new Database(dbPath);
-db.pragma("foreign_keys = ON");
-db.pragma("journal_mode = WAL");
+// Veritabanı
+const db = new Database('valotakim.db');
 
 db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  valorant_id TEXT NOT NULL,
-  rank TEXT NOT NULL,
-  role TEXT NOT NULL,
-  password TEXT NOT NULL,
-  is_admin INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS rooms (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  mode TEXT NOT NULL,
-  age TEXT NOT NULL,
-  microphone INTEGER DEFAULT 1,
-  description TEXT,
-  agents TEXT DEFAULT '[]',
-  participants TEXT DEFAULT '[]',
-  messages TEXT DEFAULT '[]',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS giveaway (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL UNIQUE,
-  username TEXT NOT NULL,
-  joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS matchmaking_queue (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL UNIQUE,
-  username TEXT NOT NULL,
-  rank TEXT NOT NULL,
-  role TEXT NOT NULL,
-  joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    valorant_id TEXT,
+    rank TEXT DEFAULT 'Demir 1',
+    role TEXT DEFAULT 'Flex',
+    password_hash TEXT NOT NULL,
+    is_admin INTEGER DEFAULT 0,
+    is_banned INTEGER DEFAULT 0,
+    ban_reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    mode TEXT,
+    age TEXT,
+    description TEXT,
+    agents TEXT DEFAULT '[]',
+    microphone INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS room_participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(room_id, user_id)
+  );
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS giveaway (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS matchmaking_queue (
+    user_id INTEGER PRIMARY KEY,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
-// ADMIN HESABI OLUŞTUR
-const adminExists = db.prepare(`SELECT id FROM users WHERE username = ?`).get(ADMIN_USERNAME);
+// İlk admin oluştur
+const adminExists = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
 if (!adminExists) {
-  db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password, is_admin) VALUES (?, ?, ?, ?, ?, 1)`)
-    .run(ADMIN_USERNAME, "Admin#0001", "Radiant", "Flex", ADMIN_PASSWORD);
-  console.log("✅ Admin hesabı oluşturuldu: admin / admin123");
-} else {
-  console.log("✅ Admin hesabı zaten mevcut");
+  const hash = bcrypt.hashSync('admin123', 10);
+  db.prepare('INSERT INTO users (username, valorant_id, rank, role, password_hash, is_admin) VALUES (?, ?, ?, ?, ?, 1)')
+    .run('admin', 'Admin#0000', 'Radiant', 'Flex', hash);
+  console.log('✅ Admin oluşturuldu: admin / admin123');
 }
 
-const RANK_ORDER = [
-  "Demir 1","Demir 2","Demir 3","Bronz 1","Bronz 2","Bronz 3",
-  "Gümüş 1","Gümüş 2","Gümüş 3","Altın 1","Altın 2","Altın 3",
-  "Platin 1","Platin 2","Platin 3","Elmas 1","Elmas 2","Elmas 3",
-  "Yücelik 1","Yücelik 2","Yücelik 3","Ölümsüzlük 1","Ölümsüzlük 2","Ölümsüzlük 3","Radiant"
-];
-
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return res.status(401).json({ success: false });
-  jwt.verify(authHeader.substring(7), JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ success: false });
+// Middleware
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ success: false, message: 'Token yok' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    if (!user || user.is_banned) return res.status(401).json({ success: false, message: 'Geçersiz' });
     req.user = user;
     next();
-  });
+  } catch {
+    res.status(401).json({ success: false, message: 'Token hatası' });
+  }
 }
 
-function requireAdmin(req, res, next) {
-  const u = db.prepare(`SELECT is_admin FROM users WHERE id = ?`).get(req.user.id);
-  if (!u || !u.is_admin) return res.status(403).json({ success: false, message: "Admin yetkisi gerekli" });
+function adminMiddleware(req, res, next) {
+  if (!req.user?.is_admin) return res.status(403).json({ success: false, message: 'Admin gerekli' });
   next();
 }
 
-// ============ KAYIT ============
-app.post("/api/register", (req, res) => {
+// AUTH ENDPOINTS
+app.post('/api/register', (req, res) => {
   try {
-    let { username, valName, valTag, rank, role, password, passwordConfirm } = req.body;
-    username = (username || "").trim();
-    valName = (valName || "").trim();
-    valTag = (valTag || "").trim();
-    
-    if (!username || !valName || !valTag || !rank || !role || !password) {
-      return res.status(400).json({ success: false, message: "Tüm alanları doldurun!" });
+    const { username, valName, valTag, rank, role, password, passwordConfirm } = req.body;
+    if (!username || !valName || !password) return res.json({ success: false, message: 'Tüm alanları doldurun' });
+    if (password !== passwordConfirm) return res.json({ success: false, message: 'Şifreler uyuşmuyor' });
+    if (db.prepare('SELECT id FROM users WHERE username = ?').get(username)) {
+      return res.json({ success: false, message: 'Kullanıcı adı alınmış' });
     }
-    if (password !== passwordConfirm) {
-      return res.status(400).json({ success: false, message: "Şifreler uyuşmuyor!" });
-    }
-    if (password.length < 4) {
-      return res.status(400).json({ success: false, message: "Şifre en az 4 karakter olmalı!" });
-    }
-
-    const valorant_id = `${valName}#${valTag}`;
-    const existing = db.prepare(`SELECT id FROM users WHERE username = ?`).get(username);
-    if (existing) {
-      username = `${username}_${Math.floor(100 + Math.random() * 900)}`;
-    }
-    db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password) VALUES (?, ?, ?, ?, ?)`)
-      .run(username, valorant_id, rank, role, password);
-    res.json({ success: true, username, message: `Kayıt başarılı! Kullanıcı adınız: ${username}` });
+    const hash = bcrypt.hashSync(password, 10);
+    const result = db.prepare('INSERT INTO users (username, valorant_id, rank, role, password_hash) VALUES (?, ?, ?, ?, ?)')
+      .run(username, `${valName}#${valTag}`, rank || 'Demir 1', role || 'Flex', hash);
+    res.json({ success: true, username, userId: result.lastInsertRowid });
   } catch (e) {
-    console.error("Register error:", e);
-    res.status(500).json({ success: false, message: "Kayıt hatası: " + e.message });
+    console.error(e);
+    res.json({ success: false, message: 'Sunucu hatası' });
   }
 });
 
-// ============ GİRİŞ ============
-app.post("/api/login", (req, res) => {
+app.post('/api/login', (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: "Kullanıcı adı ve şifre gerekli!" });
-    }
-    const user = db.prepare(`SELECT * FROM users WHERE username = ? AND password = ?`).get(username, password);
-    if (!user) {
-      return res.status(400).json({ success: false, message: "Hatalı kullanıcı adı veya şifre!" });
-    }
-    const token = jwt.sign({ id: user.id, username: user.username, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: "7d" });
-    res.json({ success: true, token, user: { id: user.id, username: user.username, is_admin: user.is_admin } });
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    if (!user) return res.json({ success: false, message: 'Kullanıcı bulunamadı' });
+    if (user.is_banned) return res.json({ success: false, message: 'Hesap banlandı: ' + (user.ban_reason || '') });
+    if (!bcrypt.compareSync(password, user.password_hash)) return res.json({ success: false, message: 'Şifre yanlış' });
+    
+    const token = jwt.sign({ id: user.id, username: user.username, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      success: true,
+      token,
+      user: { id: user.id, username: user.username, valorant_id: user.valorant_id, rank: user.rank, role: user.role, is_admin: !!user.is_admin }
+    });
   } catch (e) {
-    console.error("Login error:", e);
-    res.status(500).json({ success: false, message: "Giriş hatası" });
+    console.error(e);
+    res.json({ success: false, message: 'Sunucu hatası' });
   }
 });
 
-// ============ PROFİL ============
-app.get("/api/profile", authenticateToken, (req, res) => {
-  const user = db.prepare(`SELECT id, username, valorant_id, rank, role, is_admin FROM users WHERE id = ?`).get(req.user.id);
-  res.json({ success: true, user });
+app.get('/api/profile', authMiddleware, (req, res) => {
+  res.json({ success: true, user: req.user });
 });
 
-app.put("/api/profile", authenticateToken, (req, res) => {
-  const { valorant_id, rank, role } = req.body;
-  db.prepare(`UPDATE users SET valorant_id = ?, rank = ?, role = ? WHERE id = ?`)
-    .run(valorant_id, rank, role, req.user.id);
-  res.json({ success: true });
-});
-
-// ============ İLANLAR ============
-app.get("/api/rooms", authenticateToken, (req, res) => {
-  try {
-    const rooms = db.prepare(`SELECT rooms.*, users.username, users.valorant_id as owner_valorant_id, users.rank, users.role as owner_role 
-      FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC`).all()
-      .map(r => ({
-        ...r,
-        agents: JSON.parse(r.agents || '[]'),
-        participants: JSON.parse(r.participants || '[]'),
-        messages: JSON.parse(r.messages || '[]')
-      }));
-    res.json({ success: true, rooms });
-  } catch (e) { res.status(500).json({ success: false }); }
-});
-
-app.post("/api/rooms", authenticateToken, (req, res) => {
-  const { mode, age, description, agents, microphone } = req.body;
-  db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents, microphone) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(req.user.id, mode || "Dereceli", age || "Farketmez", description || "", JSON.stringify(agents || []), microphone ? 1 : 0);
-  res.json({ success: true });
-});
-
-app.post("/api/rooms/:id/join", authenticateToken, (req, res) => {
-  const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
-  if (!room) return res.json({ success: false, message: "İlan bulunamadı" });
-  let participants = JSON.parse(room.participants || '[]');
-  const user = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id);
-  if (!participants.includes(user.username) && room.user_id !== req.user.id) {
-    participants.push(user.username);
-    db.prepare(`UPDATE rooms SET participants = ? WHERE id = ?`).run(JSON.stringify(participants), req.params.id);
-  }
-  res.json({ success: true, participants });
-});
-
-app.post("/api/rooms/:id/message", authenticateToken, (req, res) => {
-  const { message } = req.body;
-  const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
-  if (!room) return res.json({ success: false });
-  let messages = JSON.parse(room.messages || '[]');
-  const user = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id);
-  messages.push({ sender: user.username, text: message, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-  db.prepare(`UPDATE rooms SET messages = ? WHERE id = ?`).run(JSON.stringify(messages), req.params.id);
-  res.json({ success: true });
-});
-
-app.delete("/api/rooms/:id", authenticateToken, (req, res) => {
-  const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
-  if (!room) return res.json({ success: false });
-  if (room.user_id !== req.user.id) {
-    const u = db.prepare(`SELECT is_admin FROM users WHERE id = ?`).get(req.user.id);
-    if (!u || !u.is_admin) return res.status(403).json({ success: false });
-  }
-  db.prepare(`DELETE FROM rooms WHERE id = ?`).run(req.params.id);
-  res.json({ success: true });
-});
-
-// ============ 5'Lİ TAKIM EŞLEŞTİRME ============
-app.post("/api/matchmaking/join", authenticateToken, (req, res) => {
-  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.user.id);
-  db.prepare(`INSERT INTO matchmaking_queue (user_id, username, rank, role) VALUES (?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET rank=excluded.rank, role=excluded.role, joined_at=CURRENT_TIMESTAMP`)
-    .run(user.id, user.username, user.rank, user.role);
+// ROOMS
+app.get('/api/rooms', (req, res) => {
+  const rooms = db.prepare(`
+    SELECT r.*, u.username, u.valorant_id as owner_valorant_id, u.rank, u.role as owner_role
+    FROM rooms r JOIN users u ON r.user_id = u.id WHERE u.is_banned = 0 ORDER BY r.created_at DESC
+  `).all();
   
-  const myIdx = RANK_ORDER.indexOf(user.rank);
-  const queue = db.prepare(`SELECT * FROM matchmaking_queue WHERE user_id != ?`).all();
-  
-  const suitable = queue.filter(q => {
-    const qIdx = RANK_ORDER.indexOf(q.rank);
-    return Math.abs(myIdx - qIdx) <= 3;
+  const enriched = rooms.map(r => {
+    const participants = db.prepare('SELECT u.username FROM room_participants rp JOIN users u ON rp.user_id = u.id WHERE rp.room_id = ?')
+      .all(r.id).map(p => p.username);
+    const messages = db.prepare('SELECT u.username as sender, m.message as text, m.created_at as time FROM messages m JOIN users u ON m.user_id = u.id WHERE m.room_id = ? ORDER BY m.created_at')
+      .all(r.id);
+    return { ...r, participants, messages, agents: JSON.parse(r.agents || '[]') };
   });
-
-  if (suitable.length >= 4) {
-    const team = [user, ...suitable.slice(0, 4)];
-    team.forEach(t => db.prepare(`DELETE FROM matchmaking_queue WHERE user_id = ?`).run(t.id));
-    db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents, participants) VALUES (?, ?, ?, ?, ?, ?)`)
-      .run(user.id, "Dereceli", "Farketmez", "🎯 Eşleşme ile oluşturulan 5'li takım!", '[]', JSON.stringify(team.map(t => t.username)));
-    const newRoom = db.prepare(`SELECT * FROM rooms ORDER BY id DESC LIMIT 1`).get();
-    return res.json({ success: true, matched: true, team: team.map(t => ({ username: t.username, rank: t.rank, role: t.role })), roomId: newRoom.id });
-  }
   
-  res.json({ success: true, matched: false, waiting: suitable.length + 1, needed: 5 });
+  res.json({ success: true, rooms: enriched });
 });
 
-app.post("/api/matchmaking/cancel", authenticateToken, (req, res) => {
-  db.prepare(`DELETE FROM matchmaking_queue WHERE user_id = ?`).run(req.user.id);
+app.post('/api/rooms', authMiddleware, (req, res) => {
+  const { mode, age, description, agents, microphone } = req.body;
+  const result = db.prepare('INSERT INTO rooms (user_id, mode, age, description, agents, microphone) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(req.user.id, mode, age, description || '', JSON.stringify(agents || []), microphone ? 1 : 0);
+  res.json({ success: true, roomId: result.lastInsertRowid });
+});
+
+app.post('/api/rooms/:id/join', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.id);
+  const room = db.prepare('SELECT * FROM rooms WHERE id = ?').get(roomId);
+  if (!room) return res.json({ success: false, message: 'İlan bulunamadı' });
+  if (room.user_id === req.user.id) return res.json({ success: false, message: 'Kendi ilanına katılamazsın' });
+  
+  const participants = db.prepare('SELECT user_id FROM room_participants WHERE room_id = ?').all(roomId);
+  if (participants.length >= 4) return res.json({ success: false, message: 'İlan dolu' });
+  if (participants.find(p => p.user_id === req.user.id)) return res.json({ success: false, message: 'Zaten katıldın' });
+  
+  db.prepare('INSERT INTO room_participants (room_id, user_id) VALUES (?, ?)').run(roomId, req.user.id);
   res.json({ success: true });
 });
 
-// ============ ÇEKİLİŞ ============
-app.get("/api/giveaway", (req, res) => {
-  const participants = db.prepare(`SELECT username, joined_at FROM giveaway ORDER BY joined_at ASC`).all();
+app.post('/api/rooms/:id/message', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.id);
+  const { message } = req.body;
+  if (!message?.trim()) return res.json({ success: false, message: 'Mesaj boş' });
+  
+  const room = db.prepare('SELECT * FROM rooms WHERE id = ?').get(roomId);
+  if (!room) return res.json({ success: false, message: 'İlan yok' });
+  
+  const isOwner = room.user_id === req.user.id;
+  const isParticipant = db.prepare('SELECT id FROM room_participants WHERE room_id = ? AND user_id = ?').get(roomId, req.user.id);
+  if (!isOwner && !isParticipant) return res.json({ success: false, message: 'Önce katıl' });
+  
+  db.prepare('INSERT INTO messages (room_id, user_id, message) VALUES (?, ?, ?)').run(roomId, req.user.id, message.trim());
+  res.json({ success: true });
+});
+
+app.delete('/api/rooms/:id', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.id);
+  const room = db.prepare('SELECT * FROM rooms WHERE id = ?').get(roomId);
+  if (!room) return res.json({ success: false, message: 'İlan yok' });
+  if (room.user_id !== req.user.id && !req.user.is_admin) return res.json({ success: false, message: 'Yetki yok' });
+  
+  db.prepare('DELETE FROM messages WHERE room_id = ?').run(roomId);
+  db.prepare('DELETE FROM room_participants WHERE room_id = ?').run(roomId);
+  db.prepare('DELETE FROM rooms WHERE id = ?').run(roomId);
+  res.json({ success: true });
+});
+
+// GIVEAWAY
+app.get('/api/giveaway', (req, res) => {
+  const participants = db.prepare('SELECT u.username, g.joined_at FROM giveaway g JOIN users u ON g.user_id = u.id ORDER BY g.joined_at').all();
   res.json({ success: true, participants });
 });
 
-app.post("/api/giveaway/join", authenticateToken, (req, res) => {
-  try {
-    const user = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id);
-    const existing = db.prepare(`SELECT id FROM giveaway WHERE user_id = ?`).get(req.user.id);
-    if (existing) return res.json({ success: false, message: "Zaten katıldınız!" });
-    db.prepare(`INSERT INTO giveaway (user_id, username) VALUES (?, ?)`).run(req.user.id, user.username);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
+app.post('/api/giveaway/join', authMiddleware, (req, res) => {
+  if (db.prepare('SELECT id FROM giveaway WHERE user_id = ?').get(req.user.id)) {
+    return res.json({ success: false, message: 'Zaten katıldınız' });
   }
+  db.prepare('INSERT INTO giveaway (user_id) VALUES (?)').run(req.user.id);
+  res.json({ success: true });
 });
 
-// ============ ADMIN ============
-app.get("/api/admin/rooms", authenticateToken, requireAdmin, (req, res) => {
-  const rooms = db.prepare(`SELECT rooms.*, users.username FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC`).all();
+// MATCHMAKING
+app.post('/api/matchmaking/join', authMiddleware, (req, res) => {
+  if (!db.prepare('SELECT user_id FROM matchmaking_queue WHERE user_id = ?').get(req.user.id)) {
+    db.prepare('INSERT INTO matchmaking_queue (user_id) VALUES (?)').run(req.user.id);
+  }
+  
+  const queue = db.prepare('SELECT u.id, u.username, u.rank, u.role FROM matchmaking_queue mq JOIN users u ON mq.user_id = u.id WHERE u.is_banned = 0 ORDER BY mq.joined_at LIMIT 5').all();
+  
+  if (queue.length === 5) {
+    const ids = queue.map(u => u.id);
+    db.prepare('DELETE FROM matchmaking_queue WHERE user_id IN (' + ids.join(',') + ')').run();
+    
+    const room = db.prepare('INSERT INTO rooms (user_id, mode, age, description, agents, microphone) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(queue[0].id, 'Dereceli', 'Farketmez', '5\'li eşleşme', '[]', 1);
+    const roomId = room.lastInsertRowid;
+    
+    for (let i = 1; i < 5; i++) {
+      db.prepare('INSERT INTO room_participants (room_id, user_id) VALUES (?, ?)').run(roomId, queue[i].id);
+    }
+    return res.json({ matched: true, team: queue, roomId });
+  }
+  
+  res.json({ matched: false, waiting: queue.length });
+});
+
+// ADMIN
+app.get('/api/admin/rooms', authMiddleware, adminMiddleware, (req, res) => {
+  const rooms = db.prepare('SELECT r.*, u.username FROM rooms r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC').all();
   res.json({ success: true, rooms });
 });
 
-app.delete("/api/admin/rooms/:id", authenticateToken, requireAdmin, (req, res) => {
-  db.prepare(`DELETE FROM rooms WHERE id = ?`).run(req.params.id);
+app.delete('/api/admin/rooms/:id', authMiddleware, adminMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.id);
+  db.prepare('DELETE FROM messages WHERE room_id = ?').run(roomId);
+  db.prepare('DELETE FROM room_participants WHERE room_id = ?').run(roomId);
+  db.prepare('DELETE FROM rooms WHERE id = ?').run(roomId);
   res.json({ success: true });
 });
 
-app.get("/api/admin/users", authenticateToken, requireAdmin, (req, res) => {
-  const users = db.prepare(`SELECT id, username, valorant_id, rank, role, is_admin, created_at FROM users`).all();
+app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
+  const users = db.prepare('SELECT id, username, valorant_id, rank, role, is_admin, is_banned, ban_reason, created_at FROM users ORDER BY created_at DESC').all();
   res.json({ success: true, users });
 });
 
-app.listen(PORT, () => { 
-  console.log(`✅ VALOTAKIM aktif: http://localhost:${PORT}`);
-  console.log(`📁 DB: ${dbPath}`);
-  console.log(`🔑 Admin: ${ADMIN_USERNAME} / ${ADMIN_PASSWORD}`);
+app.post('/api/admin/users/:id/ban', authMiddleware, adminMiddleware, (req, res) => {
+  const userId = parseInt(req.params.id);
+  const { reason } = req.body;
+  if (userId === req.user.id) return res.json({ success: false, message: 'Kendini banlayamazsın' });
+  
+  const target = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!target) return res.json({ success: false, message: 'Kullanıcı yok' });
+  if (target.is_admin) return res.json({ success: false, message: 'Admin banlanamaz' });
+  
+  db.prepare('UPDATE users SET is_banned = 1, ban_reason = ? WHERE id = ?').run(reason || 'Kural ihlali', userId);
+  db.prepare('DELETE FROM rooms WHERE user_id = ?').run(userId);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/users/:id/unban', authMiddleware, adminMiddleware, (req, res) => {
+  db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL WHERE id = ?').run(parseInt(req.params.id));
+  res.json({ success: true });
+});
+
+app.post('/api/admin/users/:id/toggle-admin', authMiddleware, adminMiddleware, (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (userId === req.user.id) return res.json({ success: false, message: 'Kendini değiştiremezsin' });
+  
+  const target = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId);
+  if (!target) return res.json({ success: false, message: 'Kullanıcı yok' });
+  
+  db.prepare('UPDATE users SET is_admin = ? WHERE id = ?').run(target.is_admin ? 0 : 1, userId);
+  res.json({ success: true });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 VALOTAKIM çalışıyor: http://localhost:${PORT}`);
+  console.log(`📦 Admin: admin / admin123`);
 });

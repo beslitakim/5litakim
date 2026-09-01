@@ -1,0 +1,7 @@
+node_modules/
+valotakim.db
+valotakim.db-wal
+valotakim.db-shm
+.DS_Store
+*.log
+npm-debug.log*
