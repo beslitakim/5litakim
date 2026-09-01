@@ -49,6 +49,10 @@
                     <button class="gankster-sec-btn" onclick="switchPage('matchmaking')">5'li Takım Bul</button>
                 </div>
 
+                <div class="giveaway-banner-btn" onclick="switchPage('giveaway')" style="cursor: pointer; margin-top: 20px; text-align: center;">
+                    <img src="images/cekilis.png" alt="Çekiliş" class="giveaway-logo-img">
+                </div>
+
                 <div class="bottom-auth-bar" id="auth-buttons">
                     <button class="secondary" onclick="switchPage('login')">Giriş Yap</button>
                     <button class="primary" onclick="switchPage('register')">Kayıt Ol</button>
@@ -66,9 +70,9 @@
                             <img src="images/youtube.png" alt="SMOKGG Logo" class="smokgg-badge-img">
                         </a>
                         <p class="smokgg-footer-text">
-                            Bu uygulama 
-                            <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a> 
-                            YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
+                            Bu uygulama[cite: 9]
+                            <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a>[cite: 9]
+                            YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.[cite: 9]
                         </p>
                     </div>
                 </div>
@@ -77,7 +81,6 @@
         </div>
     </div>
 
-    <!-- 2. İLANLAR SAYFASI -->
     <div class="page" id="page-rooms" style="max-width: 100% !important; padding: 40px 60px !important;">
         <div class="subpage-wrapper" style="max-width: 1400px; margin: 0 auto;">
             <div class="subpage-nav-top">
@@ -106,7 +109,6 @@
         </div>
     </div>
 
-    <!-- 3. İLAN OLUŞTURMA SAYFASI -->
     <div class="page" id="page-create-room" style="max-width: 100% !important; padding: 40px 20px !important;">
         <div class="subpage-wrapper" style="max-width: 1200px; margin: 0 auto;">
             <div class="subpage-nav-top">
@@ -147,7 +149,6 @@
         </div>
     </div>
 
-    <!-- 4. 5'Lİ TAKIM BUL SAYFASI -->
     <div class="page" id="page-matchmaking">
         <div class="subpage-wrapper">
             <div class="subpage-nav-top">
@@ -164,7 +165,6 @@
         </div>
     </div>
 
-    <!-- 5. PROFİL SAYFASI -->
     <div class="page" id="page-profile">
         <div class="subpage-wrapper">
             <div class="subpage-nav-top">
@@ -202,7 +202,6 @@
         </div>
     </div>
 
-    <!-- 6. GİRİŞ YAP SAYFASI -->
     <div class="page" id="page-login">
         <div class="subpage-wrapper">
             <div class="subpage-nav-top">
@@ -223,7 +222,6 @@
         </div>
     </div>
 
-    <!-- 7. KAYIT OL SAYFASI (Valorant ID # ayrılmış ve Çift Şifre Onaylı) -->
     <div class="page" id="page-register">
         <div class="subpage-wrapper">
             <div class="subpage-nav-top">
@@ -239,9 +237,9 @@
                     
                     <label>Valorant ID (Riot ID # Etiket)</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" name="valName" placeholder="İsim (Örn: Zerg)" required style="flex: 2;">
+                        <input type="text" name="valName" placeholder="İsim" required style="flex: 2;">
                         <span style="font-weight: 900; color: #a855f7; font-size: 18px;">#</span>
-                        <input type="text" name="valTag" placeholder="Etiket (Örn: TR1)" required style="flex: 1;">
+                        <input type="text" name="valTag" placeholder="Etiket" required style="flex: 1;">
                     </div>
 
                     <label>Rank</label>
@@ -274,7 +272,6 @@
         </div>
     </div>
 
-    <!-- 8. ADMIN PANELİ SAYFASI -->
     <div class="page" id="page-admin">
         <div class="subpage-wrapper">
             <div class="subpage-nav-top">
@@ -288,6 +285,40 @@
                     <h3>Aktif İlanlar Yönetimi</h3>
                     <div id="admin-rooms-list" style="margin-top: 15px;"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. ÇEKİLİŞ SAYFASI (Görseldeki Gibi Güncellendi) -->
+    <div class="page" id="page-giveaway">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card center" style="max-width: 900px; margin: 0 auto;">
+                
+                <!-- Üst Kısım: Logo ve Çekiliş Tarihi / Başlığı -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
+                    <img src="images/cekilis.png" alt="Çekiliş Logo" style="height: 90px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.7));">
+                    <h2 style="color: #ef4444; font-size: 26px; font-weight: 900; letter-spacing: 1px;">30 EYLÜL 2026 825 VK ÇEKİLİŞİ</h2>
+                    <p class="muted">Çekilişe katılarak ödülü kazanma şansını yakala!</p>
+                </div>
+                
+                <!-- Katılım Butonu -->
+                <div style="background: #131722; border: 1px solid rgba(168, 85, 247, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                    <button class="primary wide" onclick="joinGiveaway()" style="font-size: 16px; padding: 14px;">Çekilişe Katılım Sağla</button>
+                </div>
+
+                <!-- Alt Kısım: Çekilişe Katılanlar Listesi (Gerçek Kullanıcılar) -->
+                <div style="background: #0b0d12; border: 1px solid #262c37; padding: 20px; border-radius: 12px; text-align: left;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #262c37; padding-bottom: 10px;">📋 Çekilişe Katılanlar Listesi</h3>
+                    <div id="giveaway-participants-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Gerçek kullanıcılar JS ile buraya yüklenecek -->
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

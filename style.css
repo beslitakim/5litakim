@@ -191,4 +191,15 @@ button { cursor: pointer; }
 .smokgg-footer-text { color: #cbd5e1; font-size: 13px; text-align: center; }
 .smokgg-footer-text strong { color: #a855f7; font-weight: 800; }
 
-footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; border-top: 1px solid #20252e; margin-top: 40px; }
+footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; border-top: 1px solid #20252e; margin-top: 40px; }.giveaway-logo-img {
+    max-height: 65px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
+    transition: transform 0.2s ease;
+}
+
+.giveaway-logo-img:hover {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.9));
+}
