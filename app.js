@@ -1,329 +1,26 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VALOTAKIM - Valorant Oyuncu Eşleştirme</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+// Çekiliş Sayfası Kontrolü ve Katılımcı Listeleme
+function loadGiveawayParticipants() {
+    const container = document.getElementById('giveaway-participants-list');
+    if (!container) return;
 
-    <!-- 1. ANA MENÜ -->
-    <div class="page active" id="page-home">
-        <div class="gankster-hero-container">
-            <div class="hero-bg-gif" style="background-image: url('images/arka-plan.gif');"></div>
-            <div class="gankster-dark-overlay"></div>
+    let participants = JSON.parse(localStorage.getItem('valotakim_giveaway_users') || '[]');
+    
+    if (participants.length === 0) {
+        container.innerHTML = `<p class="muted" style="font-size: 14px;">Henüz kimse katılmadı. İlk katılan sen ol!</p>`;
+        return;
+    }
 
-            <div class="gankster-hero-content">
-                <div class="hero-top-logo-area" onclick="switchPage('home')" style="cursor: pointer;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" class="hero-main-logo-img">
-                </div>
-
-                <div class="valorant-pill-badge">
-                    <span>Trollerden kurtul. Kara listeye ekle herkes engellesin.</span>
-                </div>
-
-                <h1 class="gankster-title">
-                    <span class="title-line line-1">TAKIMINI BUL!</span>
-                    <span class="title-line line-2">OYUNA GİR!</span>
-                    <span class="title-line line-3">KEYİFLE KAZAN!</span>
-                </h1>
-                
-                <p class="gankster-desc">
-                    Tek oyuncu ara veya birbirini tanımayan 5 oyuncuyla yeni bir takım oluştur.
-                </p>
-
-                <div class="agents-showcase-bar">
-                    <div class="agent-frame"><img src="images/agent1.png" alt="Astra"></div>
-                    <div class="agent-frame"><img src="images/agent2.png" alt="Breach"></div>
-                    <div class="agent-frame"><img src="images/agent3.png" alt="Brimstone"></div>
-                    <div class="agent-frame"><img src="images/agent4.png" alt="Chamber"></div>
-                    <div class="agent-frame"><img src="images/agent5.png" alt="Killjoy"></div>
-                    <div class="agent-frame"><img src="images/agent6.png" alt="Omen"></div>
-                    <div class="agent-frame"><img src="images/agent7.png" alt="Cypher"></div>
-                    <div class="agent-frame"><img src="images/agent8.png" alt="Gekko"></div>
-                </div>
-
-                <div class="gankster-action-buttons">
-                    <button class="gankster-main-btn" onclick="switchPage('rooms')">1 Kişi Lazım</button>
-                    <button class="gankster-sec-btn" onclick="switchPage('matchmaking')">5'li Takım Bul</button>
-                </div>
-
-                <!-- Çekiliş Logosu / Butonu (Ana Sayfa) -->
-                <div class="giveaway-banner-btn" onclick="switchPage('giveaway')" style="cursor: pointer; margin-top: 20px; text-align: center;">
-                    <img src="images/cekilis.png" alt="Çekiliş" class="giveaway-logo-img">
-                </div>
-
-                <div class="bottom-auth-bar" id="auth-buttons">
-                    <button class="secondary" onclick="switchPage('login')">Giriş Yap</button>
-                    <button class="primary" onclick="switchPage('register')">Kayıt Ol</button>
-                </div>
-                <div class="bottom-auth-bar" id="user-menu" style="display:none; align-items:center; gap:15px; margin-top:25px;">
-                    <span id="topbar-username" style="font-weight:700; color:#a855f7;"></span>
-                    <button class="secondary small" onclick="switchPage('profile')">Profilim</button>
-                    <button class="primary small" id="admin-panel-btn" onclick="switchPage('admin')" style="display:none; background: linear-gradient(135deg, #ef4444, #b91c1c);">Admin Paneli</button>
-                    <button class="secondary small" onclick="logout()">Çıkış Yap</button>
-                </div>
-
-                <div class="smokgg-hero-showcase">
-                    <div class="smokgg-container">
-                        <a href="https://www.youtube.com/@SmokGG01" target="_blank" style="display: inline-block; text-decoration: none;">
-                            <img src="images/youtube.png" alt="SMOKGG Logo" class="smokgg-badge-img">
-                        </a>
-                        <p class="smokgg-footer-text">
-                            Bu uygulama 
-                            <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a> 
-                            YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
-                        </p>
-                    </div>
-                </div>
-
+    let html = '';
+    participants.forEach((user, index) => {
+        html += `
+            <div style="background: #131722; padding: 10px 15px; border-radius: 8px; border: 1px solid #303642; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: #a855f7;">#${index + 1} - ${user}</span>
+                <span style="font-size: 12px; color: #4ade80;">Katıldı ✓</span>
             </div>
-        </div>
-    </div>
-
-    <!-- 2. İLANLAR SAYFASI -->
-    <div class="page" id="page-rooms" style="max-width: 100% !important; padding: 40px 60px !important;">
-        <div class="subpage-wrapper" style="max-width: 1400px; margin: 0 auto;">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="section-head">
-                <div>
-                    <span class="eyebrow" style="color: #a855f7; font-weight: 800; font-size: 12px; letter-spacing: 1px;">TAKIM İLANLARI</span>
-                    <h2>1 Kişi Lazım İlanları</h2>
-                </div>
-                <button class="primary" onclick="checkAuthAndOpenCreateRoom()">+ İlan Oluştur</button>
-            </div>
-            <div class="filters">
-                <select id="filter-role" onchange="loadRooms()">
-                    <option value="">Tüm Rollerin İlanları</option>
-                    <option value="Duelist">Duelist</option>
-                    <option value="Controller">Controller</option>
-                    <option value="Initiator">Initiator</option>
-                    <option value="Sentinel">Sentinel</option>
-                    <option value="Flex">Flex</option>
-                </select>
-            </div>
-            <div class="rooms" id="rooms-list"></div>
-        </div>
-    </div>
-
-    <!-- 3. İLAN OLUŞTURMA SAYFASI -->
-    <div class="page" id="page-create-room" style="max-width: 100% !important; padding: 40px 20px !important;">
-        <div class="subpage-wrapper" style="max-width: 1200px; margin: 0 auto;">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card" style="max-width: 1000px !important;">
-                <h2>İlan Oluştur</h2>
-                <form id="room-form" onsubmit="createRoom(event)">
-                    
-                    <label>Ajan Seçimi (En Fazla 3 Ajan Seçin veya Farketmez)</label>
-                    <div class="agent-picker-grid" id="agent-picker-container"></div>
-                    <input type="hidden" name="selected_agents" id="selected-agents-input">
-
-                    <label>Oyun Modu</label>
-                    <select name="mode">
-                        <option value="Dereceli">Dereceli</option>
-                        <option value="Derecesiz">Derecesiz</option>
-                        <option value="Rekabetçi">Rekabetçi</option>
-                    </select>
-
-                    <label>Yaş Sınırı</label>
-                    <select name="age">
-                        <option value="Farketmez">Farketmez</option>
-                        <option value="16+">16+</option>
-                        <option value="18+">18+</option>
-                    </select>
-
-                    <label class="check"><input type="checkbox" name="microphone" checked> Mikrofon Gerekli</label>
-                    
-                    <label>Takım Şartları / Not</label>
-                    <textarea name="description" placeholder="Örn: Saygılı oyuncular gelsin, line-up bilen olsun."></textarea>
-                    
-                    <button type="submit" class="primary wide">İlanı Yayınla</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. 5'Lİ TAKIM BUL SAYFASI -->
-    <div class="page" id="page-matchmaking">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card center">
-                <h2>5'li Takım Bul</h2>
-                <p class="muted">Profilindeki ranka göre akıllı aralıkta eşleşme yapıyoruz.</p>
-                <button class="primary wide" onclick="loadMatchmaking()">Eşleşme Ara</button>
-                <div id="matchmaking-results" style="margin-top:20px; text-align:left;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. PROFİL SAYFASI -->
-    <div class="page" id="page-profile">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card narrow">
-                <h2>Profilim</h2>
-                <form id="profile-form" onsubmit="updateProfile(event)">
-                    <label>Kullanıcı Adı</label>
-                    <input type="text" id="prof-username" disabled style="opacity:0.6;">
-                    <label>Valorant ID</label>
-                    <input type="text" id="prof-valorant" required>
-                    <label>Rank</label>
-                    <select id="prof-rank">
-                        <option value="Demir 1">Demir 1</option><option value="Demir 2">Demir 2</option><option value="Demir 3">Demir 3</option>
-                        <option value="Bronz 1">Bronz 1</option><option value="Bronz 2">Bronz 2</option><option value="Bronz 3">Bronz 3</option>
-                        <option value="Gümüş 1">Gümüş 1</option><option value="Gümüş 2">Gümüş 2</option><option value="Gümüş 3">Gümüş 3</option>
-                        <option value="Altın 1">Altın 1</option><option value="Altın 2">Altın 2</option><option value="Altın 3">Altın 3</option>
-                        <option value="Platin 1">Platin 1</option><option value="Platin 2">Platin 2</option><option value="Platin 3">Platin 3</option>
-                        <option value="Elmas 1">Elmas 1</option><option value="Elmas 2">Elmas 2</option><option value="Elmas 3">Elmas 3</option>
-                        <option value="Yücelik 1">Yücelik 1</option><option value="Yücelik 2">Yücelik 2</option><option value="Yücelik 3">Yücelik 3</option>
-                        <option value="Ölümsüzlük 1">Ölümsüzlük 1</option><option value="Ölümsüzlük 2">Ölümsüzlük 2</option><option value="Ölümsüzlük 3">Ölümsüzlük 3</option>
-                        <option value="Radiant">Radiant</option>
-                    </select>
-                    <label>Ana Rol</label>
-                    <select id="prof-role">
-                        <option value="Duelist">Duelist</option><option value="Controller">Controller</option>
-                        <option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex">Flex</option>
-                    </select>
-                    <button type="submit" class="primary wide">Bilgileri Güncelle</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. GİRİŞ YAP SAYFASI -->
-    <div class="page" id="page-login">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card narrow">
-                <h2>Giriş Yap</h2>
-                <form onsubmit="loginUser(event)">
-                    <label>Kullanıcı Adı</label>
-                    <input type="text" name="username" required>
-                    <label>Şifre</label>
-                    <input type="password" name="password" required>
-                    <button type="submit" class="primary wide">Giriş Yap</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. KAYIT OL SAYFASI -->
-    <div class="page" id="page-register">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card narrow">
-                <h2>Kayıt Ol</h2>
-                <form onsubmit="registerUser(event)">
-                    <label>Kullanıcı Adı</label>
-                    <input type="text" name="username" required>
-                    
-                    <label>Valorant ID (Riot ID # Etiket)</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" name="valName" placeholder="İsim" required style="flex: 2;">
-                        <span style="font-weight: 900; color: #a855f7; font-size: 18px;">#</span>
-                        <input type="text" name="valTag" placeholder="Etiket" required style="flex: 1;">
-                    </div>
-
-                    <label>Rank</label>
-                    <select name="rank">
-                        <option value="Demir 1">Demir 1</option><option value="Demir 2">Demir 2</option><option value="Demir 3">Demir 3</option>
-                        <option value="Bronz 1">Bronz 1</option><option value="Bronz 2">Bronz 2</option><option value="Bronz 3">Bronz 3</option>
-                        <option value="Gümüş 1" selected>Gümüş 1</option><option value="Gümüş 2">Gümüş 2</option><option value="Gümüş 3">Gümüş 3</option>
-                        <option value="Altın 1">Altın 1</option><option value="Altın 2">Altın 2</option><option value="Altın 3">Altın 3</option>
-                        <option value="Platin 1">Platin 1</option><option value="Platin 2">Platin 2</option><option value="Platin 3">Platin 3</option>
-                        <option value="Elmas 1">Elmas 1</option><option value="Elmas 2">Elmas 2</option><option value="Elmas 3">Elmas 3</option>
-                        <option value="Yücelik 1">Yücelik 1</option><option value="Yücelik 2">Yücelik 2</option><option value="Yücelik 3">Yücelik 3</option>
-                        <option value="Ölümsüzlük 1">Ölümsüzlük 1</option><option value="Ölümsüzlük 2">Ölümsüzlük 2</option><option value="Ölümsüzlük 3">Ölümsüzlük 3</option>
-                        <option value="Radiant">Radiant</option>
-                    </select>
-
-                    <label>Ana Rol</label>
-                    <select name="role">
-                        <option value="Duelist">Duelist</option><option value="Controller">Controller</option><option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex" selected>Flex</option>
-                    </select>
-
-                    <label>Şifre</label>
-                    <input type="password" name="password" required>
-
-                    <label>Şifre (Tekrar)</label>
-                    <input type="password" name="passwordConfirm" required>
-
-                    <button type="submit" class="primary wide">Hesap Oluştur</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 8. ADMIN PANELİ SAYFASI -->
-    <div class="page" id="page-admin">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="color: #ef4444; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 10px;">🛡️ Yönetici (Admin) Paneli</h2>
-                <div style="margin-top: 25px;">
-                    <h3>Aktif İlanlar Yönetimi</h3>
-                    <div id="admin-rooms-list" style="margin-top: 15px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 9. ÇEKİLİŞ SAYFASI -->
-    <div class="page" id="page-giveaway">
-        <div class="subpage-wrapper">
-            <div class="subpage-nav-top">
-                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
-                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
-                </div>
-            </div>
-            <div class="form-card center" style="max-width: 800px; margin: 0 auto;">
-                <h2 style="color: #a855f7; margin-bottom: 15px;">🎁 SMOKGG Özel Çekiliş Alanı</h2>
-                <p class="muted" style="margin-bottom: 25px;">Çekiliş detayları, katılım şartları ve kazananlar burada yer alacak.</p>
-                
-                <div style="background: #131722; border: 1px solid rgba(168, 85, 247, 0.3); padding: 25px; border-radius: 12px;">
-                    <h3>Çekilişe Katıl</h3>
-                    <p class="muted" style="margin: 10px 0 20px 0;">Aşağıdaki butona basarak aktif çekilişimize adını yazdırabilirsin!</p>
-                    <button class="primary" onclick="alert('Çekilişe katılımınız başarıyla alındı!')">Çekilişe Katılım Sağla</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer>VALOTAKIM &copy; 2026 - Tüm hakları saklıdır.</footer>
-
-    <script src="app.js"></script>
-</body>
-</html>// switchPage içerisine eklenecek kontrol:
-// if (pageId === 'giveaway') loadGiveawayParticipants();
+        `;
+    });
+    container.innerHTML = html;
+}
 
 async function joinGiveaway() {
     const token = getToken();
@@ -356,25 +53,65 @@ async function joinGiveaway() {
     }
 }
 
-function loadGiveawayParticipants() {
-    const container = document.getElementById('giveaway-participants-list');
+// switchPage fonksiyonunun içine şu kontrolü eklediğinden emin ol:
+// if (pageId === 'giveaway') loadGiveawayParticipants();// === ÇEKİLİŞ (ANA SAYFA SAĞ PANEL) ===
+function loadHomeGiveawayParticipants() {
+    const container = document.getElementById('home-giveaway-participants');
     if (!container) return;
 
     let participants = JSON.parse(localStorage.getItem('valotakim_giveaway_users') || '[]');
     
     if (participants.length === 0) {
-        container.innerHTML = `<p class="muted" style="font-size: 14px;">Henüz kimse katılmadı. İlk katılan sen ol!</p>`;
+        container.innerHTML = `<p class="muted" style="font-size: 12px; text-align: center; padding: 10px;">Henüz katılan yok.</p>`;
         return;
     }
 
     let html = '';
     participants.forEach((user, index) => {
         html += `
-            <div style="background: #131722; padding: 10px 15px; border-radius: 8px; border: 1px solid #303642; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 700; color: #a855f7;">#${index + 1} - ${user}</span>
-                <span style="font-size: 12px; color: #4ade80;">Katıldı ✓</span>
+            <div class="participant-item-row">
+                <span>#${index + 1} - ${user}</span>
+                <span style="color: #4ade80; font-size: 11px;">Katıldı ✓</span>
             </div>
         `;
     });
     container.innerHTML = html;
 }
+
+async function joinGiveaway() {
+    const token = getToken();
+    if (!token) {
+        alert('Çekilişe katılabilmek için önce giriş yapmalısınız!');
+        switchPage('login');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const result = await res.json();
+        
+        if (result.success && result.user) {
+            let username = result.user.username;
+            let participants = JSON.parse(localStorage.getItem('valotakim_giveaway_users') || '[]');
+            
+            if (participants.includes(username)) {
+                alert('Zaten bu çekilişe katıldınız!');
+                return;
+            }
+
+            participants.push(username);
+            localStorage.setItem('valotakim_giveaway_users', JSON.stringify(participants));
+            alert('Tebrikler! Çekilişe başarıyla katıldınız.');
+            loadHomeGiveawayParticipants();
+        }
+    } catch (err) {
+        alert('Katılım sırasında bir hata oluştu.');
+    }
+}
+
+// DOM Yüklendiğinde listeyi çağır
+document.addEventListener('DOMContentLoaded', () => { 
+    checkAuthState(); 
+    loadHomeGiveawayParticipants();
+    if(document.getElementById('rooms-list')) loadRooms(); 
+});

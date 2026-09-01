@@ -202,4 +202,172 @@ footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; bor
 .giveaway-logo-img:hover {
     transform: scale(1.06);
     filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.9));
+}/* Ana Sayfa İki Sütunlu Düzen (Sol İçerik, Sağ Çekiliş Paneli) */
+.gankster-hero-content-flex {
+    position: relative !important;
+    z-index: 3 !important;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1300px;
+    gap: 30px;
+    padding: 20px;
+}
+
+/* Sağ Taraf Çekiliş Alanı (Senin gösterdiğin kırmızı kutuların yerleşimi) */
+.home-sidebar-giveaway {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+/* Üst Kutu (Logo ve Tarih) */
+.sidebar-giveaway-header {
+    background: rgba(17, 21, 29, 0.95);
+    border: 2px solid rgba(239, 68, 68, 0.6); /* Kırmızı kutu vurgusu */
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+}
+
+.sidebar-cekilis-logo {
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
+}
+
+.sidebar-giveaway-header h3 {
+    color: #ef4444;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+/* Alt Kutu (Katılanlar Listesi) */
+.sidebar-giveaway-list-box {
+    background: rgba(17, 21, 29, 0.95);
+    border: 2px solid rgba(239, 68, 68, 0.6); /* Kırmızı kutu vurgusu */
+    border-radius: 14px;
+    padding: 15px;
+    max-height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-giveaway-list-box h4 {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #303642;
+    padding-bottom: 8px;
+}
+
+.participants-scroll-area {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+}
+
+.participant-item-row {
+    background: #131722;
+    border: 1px solid #303642;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #a855f7;
+    display: flex;
+    justify-content: space-between;
+}/* Ana Sayfa Flex Düzeni */
+.gankster-hero-content-flex {
+    position: relative !important;
+    z-index: 3 !important;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1300px;
+    gap: 30px;
+    padding: 20px;
+}
+
+/* Sağ Çekiliş Sütunu */
+.home-sidebar-giveaway {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+/* Üst Kırmızı Kutu */
+.sidebar-giveaway-header {
+    background: rgba(17, 21, 29, 0.95);
+    border: 2px solid rgba(239, 68, 68, 0.6);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+}
+
+.sidebar-cekilis-logo {
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
+}
+
+.sidebar-giveaway-header h3 {
+    color: #ef4444;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+/* Alt Kırmızı Kutu */
+.sidebar-giveaway-list-box {
+    background: rgba(17, 21, 29, 0.95);
+    border: 2px solid rgba(239, 68, 68, 0.6);
+    border-radius: 14px;
+    padding: 15px;
+    max-height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-giveaway-list-box h4 {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #303642;
+    padding-bottom: 8px;
+}
+
+.participants-scroll-area {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+}
+
+.participant-item-row {
+    background: #131722;
+    border: 1px solid #303642;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #a855f7;
+    display: flex;
+    justify-content: space-between;
 }
