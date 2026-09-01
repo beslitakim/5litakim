@@ -6,15 +6,19 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar";
+const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar-2026";
 const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "admin123";
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const db = new Database(path.join(__dirname, "valotakim.db"));
+// DOSYA TABANLI VERİTABANI (Render'da kalıcı)
+const dbPath = path.join(__dirname, "valotakim.db");
+const db = new Database(dbPath);
 db.pragma("foreign_keys = ON");
+db.pragma("journal_mode = WAL");
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
@@ -58,12 +62,14 @@ CREATE TABLE IF NOT EXISTS matchmaking_queue (
 );
 `);
 
-// Admin oluştur
+// ADMIN HESABI OLUŞTUR
 const adminExists = db.prepare(`SELECT id FROM users WHERE username = ?`).get(ADMIN_USERNAME);
 if (!adminExists) {
   db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password, is_admin) VALUES (?, ?, ?, ?, ?, 1)`)
-    .run(ADMIN_USERNAME, "Admin#0001", "Radiant", "Flex", "admin123");
+    .run(ADMIN_USERNAME, "Admin#0001", "Radiant", "Flex", ADMIN_PASSWORD);
   console.log("✅ Admin hesabı oluşturuldu: admin / admin123");
+} else {
+  console.log("✅ Admin hesabı zaten mevcut");
 }
 
 const RANK_ORDER = [
@@ -93,19 +99,30 @@ function requireAdmin(req, res, next) {
 app.post("/api/register", (req, res) => {
   try {
     let { username, valName, valTag, rank, role, password, passwordConfirm } = req.body;
+    username = (username || "").trim();
+    valName = (valName || "").trim();
+    valTag = (valTag || "").trim();
+    
     if (!username || !valName || !valTag || !rank || !role || !password) {
       return res.status(400).json({ success: false, message: "Tüm alanları doldurun!" });
     }
     if (password !== passwordConfirm) {
       return res.status(400).json({ success: false, message: "Şifreler uyuşmuyor!" });
     }
+    if (password.length < 4) {
+      return res.status(400).json({ success: false, message: "Şifre en az 4 karakter olmalı!" });
+    }
+
     const valorant_id = `${valName}#${valTag}`;
     const existing = db.prepare(`SELECT id FROM users WHERE username = ?`).get(username);
-    if (existing) username = `${username}_${Math.floor(100 + Math.random() * 900)}`;
+    if (existing) {
+      username = `${username}_${Math.floor(100 + Math.random() * 900)}`;
+    }
     db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password) VALUES (?, ?, ?, ?, ?)`)
       .run(username, valorant_id, rank, role, password);
-    res.json({ success: true, username });
+    res.json({ success: true, username, message: `Kayıt başarılı! Kullanıcı adınız: ${username}` });
   } catch (e) {
+    console.error("Register error:", e);
     res.status(500).json({ success: false, message: "Kayıt hatası: " + e.message });
   }
 });
@@ -114,11 +131,17 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: "Kullanıcı adı ve şifre gerekli!" });
+    }
     const user = db.prepare(`SELECT * FROM users WHERE username = ? AND password = ?`).get(username, password);
-    if (!user) return res.status(400).json({ success: false, message: "Hatalı kullanıcı adı veya şifre!" });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Hatalı kullanıcı adı veya şifre!" });
+    }
     const token = jwt.sign({ id: user.id, username: user.username, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token, user: { id: user.id, username: user.username, is_admin: user.is_admin } });
   } catch (e) {
+    console.error("Login error:", e);
     res.status(500).json({ success: false, message: "Giriş hatası" });
   }
 });
@@ -154,7 +177,7 @@ app.get("/api/rooms", authenticateToken, (req, res) => {
 app.post("/api/rooms", authenticateToken, (req, res) => {
   const { mode, age, description, agents, microphone } = req.body;
   db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents, microphone) VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(req.user.id, mode, age, description || "", JSON.stringify(agents || []), microphone ? 1 : 0);
+    .run(req.user.id, mode || "Dereceli", age || "Farketmez", description || "", JSON.stringify(agents || []), microphone ? 1 : 0);
   res.json({ success: true });
 });
 
@@ -178,6 +201,17 @@ app.post("/api/rooms/:id/message", authenticateToken, (req, res) => {
   const user = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.user.id);
   messages.push({ sender: user.username, text: message, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
   db.prepare(`UPDATE rooms SET messages = ? WHERE id = ?`).run(JSON.stringify(messages), req.params.id);
+  res.json({ success: true });
+});
+
+app.delete("/api/rooms/:id", authenticateToken, (req, res) => {
+  const room = db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(req.params.id);
+  if (!room) return res.json({ success: false });
+  if (room.user_id !== req.user.id) {
+    const u = db.prepare(`SELECT is_admin FROM users WHERE id = ?`).get(req.user.id);
+    if (!u || !u.is_admin) return res.status(403).json({ success: false });
+  }
+  db.prepare(`DELETE FROM rooms WHERE id = ?`).run(req.params.id);
   res.json({ success: true });
 });
 
@@ -242,7 +276,13 @@ app.delete("/api/admin/rooms/:id", authenticateToken, requireAdmin, (req, res) =
   res.json({ success: true });
 });
 
+app.get("/api/admin/users", authenticateToken, requireAdmin, (req, res) => {
+  const users = db.prepare(`SELECT id, username, valorant_id, rank, role, is_admin, created_at FROM users`).all();
+  res.json({ success: true, users });
+});
+
 app.listen(PORT, () => { 
   console.log(`✅ VALOTAKIM aktif: http://localhost:${PORT}`);
-  console.log(`📁 Dizin: ${__dirname}`);
+  console.log(`📁 DB: ${dbPath}`);
+  console.log(`🔑 Admin: ${ADMIN_USERNAME} / ${ADMIN_PASSWORD}`);
 });

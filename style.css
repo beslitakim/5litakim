@@ -255,4 +255,45 @@ footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; bor
   .gankster-title { font-size: 36px; }
   .gankster-hero-content { align-items: center !important; text-align: center !important; }
   .smokgg-hero-showcase { justify-content: center; }
+}/* NAVBAR */
+.top-navbar {
+  background: rgba(11, 13, 18, 0.95); backdrop-filter: blur(10px);
+  border-bottom: 1px solid #20252e; position: sticky; top: 0; z-index: 100;
 }
+.nav-inner { max-width: 1300px; margin: 0 auto; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.nav-logo { cursor: pointer; }
+.logo-text { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+.logo-accent { color: #a855f7; }
+.nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent; color: #cbd5e1; border: 1px solid transparent;
+  padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 13px; transition: 0.2s;
+}
+.nav-btn:hover { background: #1a1f2c; color: #a855f7; border-color: #303642; }
+.nav-btn.logout:hover { color: #ef4444; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center;
+  padding: 20px; overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+
+/* MATCHMAKING */
+.match-spinner {
+  display: inline-block; width: 40px; height: 40px;
+  border: 4px solid rgba(168, 85, 247, 0.2); border-top-color: #a855f7;
+  border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.match-team-card {
+  background: rgba(168, 85, 247, 0.1); border: 2px solid #a855f7;
+  border-radius: 12px; padding: 20px; margin-top: 15px;
+}
+.match-team-member {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px; background: #131722; border-radius: 8px; margin-bottom: 8px;
+}
+
+.badge.green { background: #1a3a2a; color: #4ade80; }
