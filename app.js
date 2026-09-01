@@ -1,8 +1,7 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = window.location.origin + "/api";
 let currentUser = null;
 let selectedAgents = [];
 
-// Valorant Ajanları
 const AGENTS = [
   { name: "Jett", img: "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/displayicon.png" },
   { name: "Reyna", img: "https://media.valorant-api.com/agents/a3b2d30d-40b0-4d04-b801-6c3c70c2769e/displayicon.png" },
@@ -10,7 +9,6 @@ const AGENTS = [
   { name: "Raze", img: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5ab3e1c8e1c0/displayicon.png" },
   { name: "Yoru", img: "https://media.valorant-api.com/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89/displayicon.png" },
   { name: "Neon", img: "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195b751/displayicon.png" },
-  { name: "Iso", img: "https://media.valorant-api.com/agents/6f2a04ca-43e0-be8c-0e0c-8c8b8e1a8c3e/displayicon.png" },
   { name: "Omen", img: "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b0c-9c8b8e1a8c3e/displayicon.png" },
   { name: "Viper", img: "https://media.valorant-api.com/agents/707eab51-4836-f488-047c-9c8b8e1a8c3e/displayicon.png" },
   { name: "Astra", img: "https://media.valorant-api.com/agents/41fb69c1-4189-7b37-f117-bcaf1e9c8e1c/displayicon.png" },
@@ -36,7 +34,6 @@ const RANKS = [
   "Yücelik 1","Yücelik 2","Yücelik 3","Ölümsüzlük 1","Ölümsüzlük 2","Ölümsüzlük 3","Radiant"
 ];
 
-// ============ YARDIMCI FONKSİYONLAR ============
 function getToken() { return localStorage.getItem('valotakim_token'); }
 function setToken(t) { localStorage.setItem('valotakim_token', t); }
 function clearToken() { localStorage.removeItem('valotakim_token'); }
@@ -64,13 +61,10 @@ function switchPage(pageId) {
   if (pageId === 'home') loadHomeGiveawayParticipants();
 }
 
-// ============ AUTH STATE ============
+// ============ AUTH ============
 async function checkAuthState() {
   const token = getToken();
-  if (!token) {
-    showLoggedOut();
-    return;
-  }
+  if (!token) { showLoggedOut(); return; }
   try {
     const res = await fetch(API_URL + '/profile', { headers: { 'Authorization': `Bearer ${token}` } });
     const result = await res.json();
@@ -81,9 +75,7 @@ async function checkAuthState() {
       clearToken();
       showLoggedOut();
     }
-  } catch (e) {
-    showLoggedOut();
-  }
+  } catch (e) { showLoggedOut(); }
 }
 
 function showLoggedIn() {
@@ -123,16 +115,20 @@ async function register() {
     alert('Tüm alanları doldurun!'); return;
   }
 
-  const res = await fetch(API_URL + '/register', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, valName, valTag, rank, role, password, passwordConfirm })
-  });
-  const data = await res.json();
-  if (data.success) {
-    alert(`Kayıt başarılı! Kullanıcı adınız: ${data.username}`);
-    switchPage('login');
-  } else {
-    alert(data.message || 'Kayıt hatası');
+  try {
+    const res = await fetch(API_URL + '/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, valName, valTag, rank, role, password, passwordConfirm })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`Kayıt başarılı! Kullanıcı adınız: ${data.username}`);
+      switchPage('login');
+    } else {
+      alert(data.message || 'Kayıt hatası');
+    }
+  } catch (e) {
+    alert('Sunucuya bağlanılamadı: ' + e.message);
   }
 }
 
@@ -142,19 +138,23 @@ async function login() {
   const password = document.getElementById('login-pass').value;
   if (!username || !password) { alert('Tüm alanları doldurun!'); return; }
 
-  const res = await fetch(API_URL + '/login', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.success) {
-    setToken(data.token);
-    currentUser = data.user;
-    showLoggedIn();
-    alert('Giriş başarılı!');
-    switchPage('home');
-  } else {
-    alert(data.message || 'Giriş hatası');
+  try {
+    const res = await fetch(API_URL + '/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      setToken(data.token);
+      currentUser = data.user;
+      showLoggedIn();
+      alert('Giriş başarılı!');
+      switchPage('home');
+    } else {
+      alert(data.message || 'Giriş hatası');
+    }
+  } catch (e) {
+    alert('Sunucuya bağlanılamadı: ' + e.message);
   }
 }
 
@@ -189,24 +189,22 @@ async function updateProfile() {
 async function loadRooms() {
   const data = await apiFetch('/rooms');
   const container = document.getElementById('rooms-list');
+  if (!container) return;
   if (!data.success || !data.rooms) { container.innerHTML = '<p>Yüklenemedi</p>'; return; }
 
-  const filter = document.getElementById('room-filter').value;
+  const filter = document.getElementById('room-filter')?.value || 'all';
   let rooms = data.rooms;
-  if (filter !== 'all') {
-    rooms = rooms.filter(r => r.owner_role === filter);
-  }
+  if (filter !== 'all') rooms = rooms.filter(r => r.owner_role === filter);
 
   if (rooms.length === 0) {
     container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:40px;">Henüz ilan yok. İlk ilan sen oluştur!</p>';
     return;
   }
-
   container.innerHTML = rooms.map(r => renderRoomCard(r)).join('');
 }
 
 function renderRoomCard(room) {
-  const isOwner = currentUser && currentUser.id && room.user_id === currentUser.id;
+  const isOwner = currentUser && room.user_id === currentUser.id;
   const isJoined = currentUser && room.participants.includes(currentUser.username);
   const agentsHtml = room.agents.map(a => {
     const ag = AGENTS.find(x => x.name === a);
@@ -237,7 +235,6 @@ function renderRoomCard(room) {
         <span class="badge ${room.microphone ? 'green' : 'red'}">${room.microphone ? '🎤 Mikrofon: EVET' : '🔇 Mikrofon: HAYIR'}</span>
       </div>
       ${room.description ? `<p style="color:#cbd5e1; font-size:13px; background:#090b10; padding:10px; border-radius:8px;">${room.description}</p>` : ''}
-      
       <div style="border-top:1px solid #262c37; padding-top:12px;">
         <h4 style="font-size:13px; margin-bottom:8px; color:#a855f7;">👥 Katılımcılar (${room.participants.length + 1}/5)</h4>
         <div class="participants-management-list">
@@ -250,13 +247,10 @@ function renderRoomCard(room) {
           ${participantsHtml}
         </div>
       </div>
-
       <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
         ${!isOwner && !isJoined ? `<button class="btn-join" onclick="joinRoom(${room.id})">+ Katıl</button>` : ''}
         ${isJoined ? `<span class="badge green">✓ Katıldın</span>` : ''}
-        ${isOwner ? `<button class="btn-delete" onclick="deleteRoom(${room.id})">🗑️ Sil</button>` : ''}
       </div>
-
       <div class="room-chat-box" style="margin-top:10px;">
         <h4 style="font-size:13px; color:#a855f7;">💬 Sohbet</h4>
         <div class="chat-messages-area" id="chat-${room.id}">${chatHtml || '<p style="color:#666e7b; font-size:12px;">Henüz mesaj yok</p>'}</div>
@@ -282,6 +276,7 @@ function closeCreateRoom() {
 
 function renderAgentPicker() {
   const container = document.getElementById('agent-picker');
+  if (!container) return;
   container.innerHTML = AGENTS.map((a, i) => {
     const selected = selectedAgents.includes(a.name);
     const idx = selectedAgents.indexOf(a.name);
@@ -330,12 +325,6 @@ async function joinRoom(id) {
   if (data.success) { alert('İlana katıldın!'); loadRooms(); }
 }
 
-async function deleteRoom(id) {
-  if (!confirm('İlanı silmek istediğinize emin misiniz?')) return;
-  const data = await apiFetch(`/admin/rooms/${id}`, { method: 'DELETE' });
-  if (data.success) loadRooms();
-}
-
 async function sendMessage(roomId) {
   const input = document.getElementById(`msg-${roomId}`);
   const message = input.value.trim();
@@ -349,7 +338,7 @@ async function sendMessage(roomId) {
   }
 }
 
-// ============ 5'Lİ TAKIM EŞLEŞTİRME ============
+// ============ 5'Lİ TAKIM ============
 let matchmakingInterval = null;
 
 async function startMatchmaking() {
@@ -362,7 +351,7 @@ async function startMatchmaking() {
   btn.disabled = true;
   btn.textContent = '⏳ Aranıyor...';
   result.innerHTML = '';
-  status.innerHTML = '<div class="match-spinner"></div><p style="margin-top:15px; color:#a855f7;">Rankına uygun takım arkadaşları aranıyor...</p>';
+  status.innerHTML = '<p style="margin-top:15px; color:#a855f7;">Rankına uygun takım arkadaşları aranıyor...</p>';
 
   const tryMatch = async () => {
     const data = await apiFetch('/matchmaking/join', { method: 'POST' });
@@ -371,7 +360,6 @@ async function startMatchmaking() {
       btn.disabled = false;
       btn.textContent = '🔎 Eşleşme Ara';
       status.innerHTML = '<p style="color:#4ade80; font-weight:800;">✅ TAKIM BULUNDU!</p>';
-      
       result.innerHTML = `
         <div class="match-team-card">
           <h3 style="color:#a855f7; margin-bottom:15px;">🎉 5'li Takımın Hazır!</h3>
@@ -385,7 +373,7 @@ async function startMatchmaking() {
         </div>
       `;
     } else {
-      status.innerHTML = `<div class="match-spinner"></div><p style="margin-top:15px; color:#a855f7;">Kuyrukta ${data.waiting}/5 kişi bekliyor...</p>`;
+      status.innerHTML = `<p style="margin-top:15px; color:#a855f7;">Kuyrukta ${data.waiting}/5 kişi bekliyor...</p>`;
     }
   };
 
@@ -456,7 +444,6 @@ async function loadAdminRooms() {
     <div style="background:#131722; padding:12px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #303642;">
       <div>
         <b style="color:#a855f7;">#${r.id}</b> - ${r.username} • ${r.mode} • ${r.age}
-        <div style="font-size:12px; color:#94a3b8;">Katılımcı: ${JSON.parse(r.participants || '[]').length + 1}</div>
       </div>
       <button class="btn-delete" onclick="adminDeleteRoom(${r.id})">🗑️ Sil</button>
     </div>
@@ -469,7 +456,7 @@ async function adminDeleteRoom(id) {
   if (data.success) loadAdminRooms();
 }
 
-// ============ RANK SELECT DOLDUR ============
+// ============ RANK SELECT ============
 function fillRankSelects() {
   ['reg-rank', 'prof-rank'].forEach(id => {
     const sel = document.getElementById(id);

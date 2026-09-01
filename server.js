@@ -2,16 +2,18 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const Database = require("better-sqlite3");
+const path = require("path");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "valotakim-gizli-anahtar";
-const ADMIN_USERNAME = "admin"; // Admin kullanıcı adı
+const ADMIN_USERNAME = "admin";
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const db = new Database("valotakim.db");
+const db = new Database(path.join(__dirname, "valotakim.db"));
 db.pragma("foreign_keys = ON");
 
 db.exec(`
@@ -56,12 +58,20 @@ CREATE TABLE IF NOT EXISTS matchmaking_queue (
 );
 `);
 
-// İlk admin oluştur
+// Admin oluştur
 const adminExists = db.prepare(`SELECT id FROM users WHERE username = ?`).get(ADMIN_USERNAME);
 if (!adminExists) {
   db.prepare(`INSERT INTO users (username, valorant_id, rank, role, password, is_admin) VALUES (?, ?, ?, ?, ?, 1)`)
     .run(ADMIN_USERNAME, "Admin#0001", "Radiant", "Flex", "admin123");
+  console.log("✅ Admin hesabı oluşturuldu: admin / admin123");
 }
+
+const RANK_ORDER = [
+  "Demir 1","Demir 2","Demir 3","Bronz 1","Bronz 2","Bronz 3",
+  "Gümüş 1","Gümüş 2","Gümüş 3","Altın 1","Altın 2","Altın 3",
+  "Platin 1","Platin 2","Platin 3","Elmas 1","Elmas 2","Elmas 3",
+  "Yücelik 1","Yücelik 2","Yücelik 3","Ölümsüzlük 1","Ölümsüzlük 2","Ölümsüzlük 3","Radiant"
+];
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -79,20 +89,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// RANK SIRASI (eşleşme için)
-const RANK_ORDER = [
-  "Demir 1","Demir 2","Demir 3",
-  "Bronz 1","Bronz 2","Bronz 3",
-  "Gümüş 1","Gümüş 2","Gümüş 3",
-  "Altın 1","Altın 2","Altın 3",
-  "Platin 1","Platin 2","Platin 3",
-  "Elmas 1","Elmas 2","Elmas 3",
-  "Yücelik 1","Yücelik 2","Yücelik 3",
-  "Ölümsüzlük 1","Ölümsüzlük 2","Ölümsüzlük 3",
-  "Radiant"
-];
-
-// === KAYIT ===
+// ============ KAYIT ============
 app.post("/api/register", (req, res) => {
   try {
     let { username, valName, valTag, rank, role, password, passwordConfirm } = req.body;
@@ -113,7 +110,7 @@ app.post("/api/register", (req, res) => {
   }
 });
 
-// === GİRİŞ ===
+// ============ GİRİŞ ============
 app.post("/api/login", (req, res) => {
   try {
     const { username, password } = req.body;
@@ -126,7 +123,7 @@ app.post("/api/login", (req, res) => {
   }
 });
 
-// === PROFİL ===
+// ============ PROFİL ============
 app.get("/api/profile", authenticateToken, (req, res) => {
   const user = db.prepare(`SELECT id, username, valorant_id, rank, role, is_admin FROM users WHERE id = ?`).get(req.user.id);
   res.json({ success: true, user });
@@ -139,7 +136,7 @@ app.put("/api/profile", authenticateToken, (req, res) => {
   res.json({ success: true });
 });
 
-// === İLANLAR ===
+// ============ İLANLAR ============
 app.get("/api/rooms", authenticateToken, (req, res) => {
   try {
     const rooms = db.prepare(`SELECT rooms.*, users.username, users.valorant_id as owner_valorant_id, users.rank, users.role as owner_role 
@@ -184,15 +181,13 @@ app.post("/api/rooms/:id/message", authenticateToken, (req, res) => {
   res.json({ success: true });
 });
 
-// === 5'Lİ TAKIM EŞLEŞTİRME ===
+// ============ 5'Lİ TAKIM EŞLEŞTİRME ============
 app.post("/api/matchmaking/join", authenticateToken, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.user.id);
-  // Kuyruğa ekle (varsa güncelle)
   db.prepare(`INSERT INTO matchmaking_queue (user_id, username, rank, role) VALUES (?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET rank=excluded.rank, role=excluded.role, joined_at=CURRENT_TIMESTAMP`)
     .run(user.id, user.username, user.rank, user.role);
   
-  // Uygun eşleşmeleri bul (±3 rank aralığı)
   const myIdx = RANK_ORDER.indexOf(user.rank);
   const queue = db.prepare(`SELECT * FROM matchmaking_queue WHERE user_id != ?`).all();
   
@@ -201,18 +196,12 @@ app.post("/api/matchmaking/join", authenticateToken, (req, res) => {
     return Math.abs(myIdx - qIdx) <= 3;
   });
 
-  // 4 kişi bulunduysa takım oluştur
   if (suitable.length >= 4) {
     const team = [user, ...suitable.slice(0, 4)];
-    // Kuyruktan kaldır
     team.forEach(t => db.prepare(`DELETE FROM matchmaking_queue WHERE user_id = ?`).run(t.id));
-    // Yeni oda oluştur
-    const agents = JSON.stringify([]);
-    db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents) VALUES (?, ?, ?, ?, ?)`)
-      .run(user.id, "Dereceli", "Farketmez", "🎯 Eşleşme ile oluşturulan 5'li takım!", agents);
+    db.prepare(`INSERT INTO rooms (user_id, mode, age, description, agents, participants) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(user.id, "Dereceli", "Farketmez", "🎯 Eşleşme ile oluşturulan 5'li takım!", '[]', JSON.stringify(team.map(t => t.username)));
     const newRoom = db.prepare(`SELECT * FROM rooms ORDER BY id DESC LIMIT 1`).get();
-    const participants = team.map(t => t.username);
-    db.prepare(`UPDATE rooms SET participants = ? WHERE id = ?`).run(JSON.stringify(participants), newRoom.id);
     return res.json({ success: true, matched: true, team: team.map(t => ({ username: t.username, rank: t.rank, role: t.role })), roomId: newRoom.id });
   }
   
@@ -224,7 +213,7 @@ app.post("/api/matchmaking/cancel", authenticateToken, (req, res) => {
   res.json({ success: true });
 });
 
-// === ÇEKİLİŞ ===
+// ============ ÇEKİLİŞ ============
 app.get("/api/giveaway", (req, res) => {
   const participants = db.prepare(`SELECT username, joined_at FROM giveaway ORDER BY joined_at ASC`).all();
   res.json({ success: true, participants });
@@ -242,7 +231,7 @@ app.post("/api/giveaway/join", authenticateToken, (req, res) => {
   }
 });
 
-// === ADMIN ===
+// ============ ADMIN ============
 app.get("/api/admin/rooms", authenticateToken, requireAdmin, (req, res) => {
   const rooms = db.prepare(`SELECT rooms.*, users.username FROM rooms JOIN users ON rooms.user_id = users.id ORDER BY rooms.id DESC`).all();
   res.json({ success: true, rooms });
@@ -253,9 +242,7 @@ app.delete("/api/admin/rooms/:id", authenticateToken, requireAdmin, (req, res) =
   res.json({ success: true });
 });
 
-app.get("/api/admin/users", authenticateToken, requireAdmin, (req, res) => {
-  const users = db.prepare(`SELECT id, username, valorant_id, rank, role, is_admin, created_at FROM users`).all();
-  res.json({ success: true, users });
+app.listen(PORT, () => { 
+  console.log(`✅ VALOTAKIM aktif: http://localhost:${PORT}`);
+  console.log(`📁 Dizin: ${__dirname}`);
 });
-
-app.listen(PORT, () => { console.log(`✅ VALOTAKIM Sunucu aktif: http://localhost:${PORT}`); });
