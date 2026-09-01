@@ -1,342 +1,325 @@
-const API_URL = "/api"; 
-let roomsInterval = null;
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALOTAKIM - Valorant Oyuncu Eşleştirme</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-function getToken() {
-    return localStorage.getItem('valotakim_token');
-}
+    <!-- 1. ANA MENÜ -->
+    <div class="page active" id="page-home">
+        <div class="gankster-hero-container">
+            <div class="hero-bg-gif" style="background-image: url('images/arka-plan.gif');"></div>
+            <div class="gankster-dark-overlay"></div>
 
-function switchPage(pageId) {
-    if (pageId === 'admin') {
-        const loggedUser = localStorage.getItem('valotakim_logged');
-        if (loggedUser !== 'admin') {
-            alert('Bu sayfaya sadece admin yetkilisi erişebilir!');
-            return;
-        }
-        loadAdminRooms();
-    }
+            <div class="gankster-hero-content">
+                <div class="hero-top-logo-area" onclick="switchPage('home')" style="cursor: pointer;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" class="hero-main-logo-img">
+                </div>
 
-    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    const target = document.getElementById('page-' + pageId);
-    if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
-    if (pageId === 'create-room') initAgentPicker();
-    if (pageId === 'profile') loadProfileData();
-    if (pageId === 'rooms') { loadRooms(); if(!roomsInterval) roomsInterval = setInterval(loadRooms, 3000); } 
-    else { if(roomsInterval) { clearInterval(roomsInterval); roomsInterval = null; } }
-    if (pageId === 'matchmaking') loadMatchmaking();
-}
+                <div class="valorant-pill-badge">
+                    <span>Trollerden kurtul. Kara listeye ekle herkes engellesin.</span>
+                </div>
 
-// === STANDART KAYIT OL (ÇİFT ŞİFRE ONAYLI) ===
-async function registerUser(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
+                <h1 class="gankster-title">
+                    <span class="title-line line-1">TAKIMINI BUL!</span>
+                    <span class="title-line line-2">OYUNA GİR!</span>
+                    <span class="title-line line-3">KEYİFLE KAZAN!</span>
+                </h1>
+                
+                <p class="gankster-desc">
+                    Tek oyuncu ara veya birbirini tanımayan 5 oyuncuyla yeni bir takım oluştur.
+                </p>
 
-    if (data.password !== data.passwordConfirm) {
-        alert('Şifreler birbiriyle uyuşmuyor!');
-        return;
-    }
+                <div class="agents-showcase-bar">
+                    <div class="agent-frame"><img src="images/agent1.png" alt="Astra"></div>
+                    <div class="agent-frame"><img src="images/agent2.png" alt="Breach"></div>
+                    <div class="agent-frame"><img src="images/agent3.png" alt="Brimstone"></div>
+                    <div class="agent-frame"><img src="images/agent4.png" alt="Chamber"></div>
+                    <div class="agent-frame"><img src="images/agent5.png" alt="Killjoy"></div>
+                    <div class="agent-frame"><img src="images/agent6.png" alt="Omen"></div>
+                    <div class="agent-frame"><img src="images/agent7.png" alt="Cypher"></div>
+                    <div class="agent-frame"><img src="images/agent8.png" alt="Gekko"></div>
+                </div>
 
-    try {
-        const res = await fetch(`${API_URL}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (result.success) {
-            alert('Kayıt başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.');
-            switchPage('login');
-        } else {
-            alert(result.message || 'Kayıt başarısız.');
-        }
-    } catch (err) {
-        alert('Sunucu bağlantı hatası.');
-    }
-}
+                <div class="gankster-action-buttons">
+                    <button class="gankster-main-btn" onclick="switchPage('rooms')">1 Kişi Lazım</button>
+                    <button class="gankster-sec-btn" onclick="switchPage('matchmaking')">5'li Takım Bul</button>
+                </div>
 
-// === STANDART GİRİŞ YAP ===
-async function loginUser(event) {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
+                <!-- Çekiliş Logosu / Butonu (Ana Sayfa) -->
+                <div class="giveaway-banner-btn" onclick="switchPage('giveaway')" style="cursor: pointer; margin-top: 20px; text-align: center;">
+                    <img src="images/cekilis.png" alt="Çekiliş" class="giveaway-logo-img">
+                </div>
 
-    try {
-        const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (result.success) {
-            localStorage.setItem('valotakim_token', result.token);
-            localStorage.setItem('valotakim_logged', result.user.username);
-            checkAuthState();
-            switchPage('home');
-            alert('Başarıyla giriş yapıldı: ' + result.user.username);
-        } else {
-            alert(result.message || 'Hatalı kullanıcı adı veya şifre.');
-        }
-    } catch (err) {
-        alert('Sunucu bağlantı hatası.');
-    }
-}
+                <div class="bottom-auth-bar" id="auth-buttons">
+                    <button class="secondary" onclick="switchPage('login')">Giriş Yap</button>
+                    <button class="primary" onclick="switchPage('register')">Kayıt Ol</button>
+                </div>
+                <div class="bottom-auth-bar" id="user-menu" style="display:none; align-items:center; gap:15px; margin-top:25px;">
+                    <span id="topbar-username" style="font-weight:700; color:#a855f7;"></span>
+                    <button class="secondary small" onclick="switchPage('profile')">Profilim</button>
+                    <button class="primary small" id="admin-panel-btn" onclick="switchPage('admin')" style="display:none; background: linear-gradient(135deg, #ef4444, #b91c1c);">Admin Paneli</button>
+                    <button class="secondary small" onclick="logout()">Çıkış Yap</button>
+                </div>
 
-function logout() {
-    localStorage.removeItem('valotakim_token');
-    localStorage.removeItem('valotakim_logged');
-    checkAuthState();
-    switchPage('home');
-}
-
-function checkAuthState() {
-    const loggedUser = localStorage.getItem('valotakim_logged');
-    const authButtons = document.getElementById('auth-buttons');
-    const userMenu = document.getElementById('user-menu');
-    const usernameSpan = document.getElementById('topbar-username');
-    const adminBtn = document.getElementById('admin-panel-btn');
-
-    if (loggedUser) {
-        if (authButtons) authButtons.style.display = 'none';
-        if (userMenu) userMenu.style.display = 'flex';
-        if (usernameSpan) usernameSpan.textContent = loggedUser;
-        
-        if (adminBtn) {
-            adminBtn.style.display = (loggedUser === 'admin') ? 'inline-block' : 'none';
-        }
-    } else {
-        if (authButtons) authButtons.style.display = 'flex';
-        if (userMenu) userMenu.style.display = 'none';
-    }
-}
-
-function checkAuthAndOpenCreateRoom() {
-    if (!getToken()) { alert('İlan oluşturmak için giriş yapmalısınız!'); switchPage('login'); return; }
-    switchPage('create-room');
-}
-
-// === PROFİL İŞLEMLERİ ===
-async function loadProfileData() {
-    const token = getToken();
-    if (!token) return;
-    try {
-        const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const result = await res.json();
-        if (result.success && result.user) {
-            document.getElementById('prof-username').value = result.user.username;
-            document.getElementById('prof-valorant').value = result.user.valorant_id || '';
-            document.getElementById('prof-rank').value = result.user.rank || 'Gümüş 1';
-            document.getElementById('prof-role').value = result.user.role || 'Flex';
-        }
-    } catch(err) { console.error(err); }
-}
-
-async function updateProfile(event) {
-    event.preventDefault();
-    const token = getToken();
-    const data = {
-        valorant_id: document.getElementById('prof-valorant').value,
-        rank: document.getElementById('prof-rank').value,
-        role: document.getElementById('prof-role').value
-    };
-    await fetch(`${API_URL}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(data)
-    });
-    alert('Profil güncellendi!');
-    switchPage('home');
-}
-
-// === ODA (İLAN) İŞLEMLERİ ===
-const agentNames = ["ASTRA", "BREACH", "BRIMSTONE", "CHAMBER", "KILLJOY", "OMEN", "CYPHER", "GEKKO", "JETT", "KAYO", "DEADLOCK", "NEON", "PHOENIX", "RAZE", "REYNA", "SAGE", "SKYE", "SOVA", "VIPER", "YORU", "ISO", "CLOVE", "VYSE", "TEJO", "VETO", "AJAN 26"];
-let selectedAgents = [];
-
-function initAgentPicker() {
-    const container = document.getElementById('agent-picker-container');
-    if (!container) return;
-    selectedAgents = [];
-    document.getElementById('selected-agents-input').value = '';
-    
-    let html = `<div class="agent-pick-box farketmez-box" id="agent-box-farketmez" onclick="toggleFarketmez()"><span class="farketmez-text">FARKETMEZ</span></div>`;
-    for(let i=1; i<=26; i++) {
-        let name = agentNames[i-1] || `AJAN ${i}`;
-        html += `<div class="agent-pick-box" id="agent-box-${i}" onclick="toggleAgent(${i})"><img src="images/agent${i}.png"><span class="agent-name-label">${name}</span></div>`;
-    }
-    container.innerHTML = html;
-}
-
-function toggleFarketmez() {
-    selectedAgents = selectedAgents.includes('farketmez') ? [] : ['farketmez'];
-    updateAgentPickerUI();
-}
-
-function toggleAgent(id) {
-    if(selectedAgents.includes('farketmez')) selectedAgents = [];
-    const index = selectedAgents.indexOf(id);
-    if(index > -1) selectedAgents.splice(index, 1);
-    else {
-        if(selectedAgents.length >= 3) { alert('En fazla 3 ajan seçebilirsiniz!'); return; }
-        selectedAgents.push(id);
-    }
-    updateAgentPickerUI();
-}
-
-function updateAgentPickerUI() {
-    document.getElementById('agent-box-farketmez')?.classList.toggle('selected', selectedAgents.includes('farketmez'));
-    for(let i=1; i<=26; i++) document.getElementById(`agent-box-${i}`)?.classList.toggle('selected', selectedAgents.includes(i));
-    document.getElementById('selected-agents-input').value = JSON.stringify(selectedAgents);
-}
-
-async function createRoom(event) {
-    event.preventDefault();
-    if(selectedAgents.length === 0) { alert('Lütfen en az 1 ajan seçin!'); return; }
-    
-    const formData = new FormData(event.target);
-    const data = {
-        mode: formData.get('mode'),
-        age: formData.get('age'),
-        microphone: formData.get('microphone') ? 1 : 0,
-        description: formData.get('description'),
-        agents: selectedAgents
-    };
-
-    const res = await fetch(`${API_URL}/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify(data)
-    });
-    if ((await res.json()).success) { alert('İlan yayınlandı!'); switchPage('rooms'); }
-}
-
-async function loadRooms() {
-    const roomsList = document.getElementById('rooms-list');
-    if (!roomsList) return;
-    const token = getToken();
-    if (!token) return;
-
-    try {
-        const res = await fetch(`${API_URL}/rooms`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if(!res.ok) return;
-        const result = await res.json();
-        
-        let html = '';
-        if(!result.success || result.rooms.length === 0) {
-            html = `<p class="muted" style="text-align:center; padding:40px;">Aktif ilan bulunmuyor.</p>`;
-        } else {
-            const loggedUser = localStorage.getItem('valotakim_logged');
-            result.rooms.forEach((room) => {
-                let agentImgs = room.agents.includes('farketmez') ? 
-                    `<span class="badge" style="background:#a855f7; color:#fff;">FARKETMEZ</span>` : 
-                    room.agents.map(aId => `<img src="images/agent${aId}.png" class="mini-agent-img" onerror="this.src='images/logo.png'">`).join('');
-
-                let isOwner = (loggedUser === room.username);
-                let inRoom = (room.participants || []).includes(loggedUser) || isOwner;
-
-                let messagesHtml = (room.messages || []).map(m => `<div class="chat-msg-item"><strong>${m.sender}:</strong> ${m.text} <span style="font-size:10px; color:#aaa; margin-left:5px;">${m.time}</span></div>`).join('');
-
-                html += `
-                    <div class="room-card-custom">
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <div class="room-left-info">
-                                <div class="room-user-avatar"><img src="images/logo.png" alt="Logo"></div>
-                                <div>
-                                    <span class="room-username-txt">${room.username}</span>
-                                    <span class="room-rank-txt">Rank: ${room.rank} | Not: ${room.description || 'Yok'}</span>
-                                </div>
-                            </div>
-                            <div class="room-middle-agents">${agentImgs}</div>
-                            <div class="room-right-action">
-                                <span class="badge red">${room.mode}</span>
-                                <button class="primary small" onclick="joinRoom(${room.id})">${inRoom ? 'Odadasın' : 'Odaya Katıl'}</button>
-                            </div>
-                        </div>
-
-                        ${inRoom ? `
-                            <div class="room-chat-box" style="margin-top: 10px;">
-                                <div class="chat-messages-area" id="chat-box-${room.id}">${messagesHtml || '<p class="muted" style="font-size:12px;">Sohbet henüz boş...</p>'}</div>
-                                <div class="chat-input-row">
-                                    <input type="text" id="chat-input-${room.id}" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter') sendRoomMessage(${room.id})">
-                                    <button class="primary small" onclick="sendRoomMessage(${room.id})">Gönder</button>
-                                </div>
-                            </div>
-                        ` : ''}
+                <div class="smokgg-hero-showcase">
+                    <div class="smokgg-container">
+                        <a href="https://www.youtube.com/@SmokGG01" target="_blank" style="display: inline-block; text-decoration: none;">
+                            <img src="images/youtube.png" alt="SMOKGG Logo" class="smokgg-badge-img">
+                        </a>
+                        <p class="smokgg-footer-text">
+                            Bu uygulama 
+                            <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a> 
+                            YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
+                        </p>
                     </div>
-                `;
-            });
-        }
-        roomsList.innerHTML = html;
-    } catch (err) { console.error(err); }
-}
+                </div>
 
-async function joinRoom(roomId) {
-    await fetch(`${API_URL}/rooms/${roomId}/join`, { method: 'POST', headers: { 'Authorization': `Bearer ${getToken()}` } });
-    loadRooms();
-}
+            </div>
+        </div>
+    </div>
 
-async function sendRoomMessage(roomId) {
-    const input = document.getElementById(`chat-input-${roomId}`);
-    const text = input.value.trim();
-    if(!text) return;
-    
-    await fetch(`${API_URL}/rooms/${roomId}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ message: text })
-    });
-    input.value = '';
-    loadRooms();
-}
+    <!-- 2. İLANLAR SAYFASI -->
+    <div class="page" id="page-rooms" style="max-width: 100% !important; padding: 40px 60px !important;">
+        <div class="subpage-wrapper" style="max-width: 1400px; margin: 0 auto;">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow" style="color: #a855f7; font-weight: 800; font-size: 12px; letter-spacing: 1px;">TAKIM İLANLARI</span>
+                    <h2>1 Kişi Lazım İlanları</h2>
+                </div>
+                <button class="primary" onclick="checkAuthAndOpenCreateRoom()">+ İlan Oluştur</button>
+            </div>
+            <div class="filters">
+                <select id="filter-role" onchange="loadRooms()">
+                    <option value="">Tüm Rollerin İlanları</option>
+                    <option value="Duelist">Duelist</option>
+                    <option value="Controller">Controller</option>
+                    <option value="Initiator">Initiator</option>
+                    <option value="Sentinel">Sentinel</option>
+                    <option value="Flex">Flex</option>
+                </select>
+            </div>
+            <div class="rooms" id="rooms-list"></div>
+        </div>
+    </div>
 
-// === ADMIN İŞLEMLERİ ===
-async function loadAdminRooms() {
-    const list = document.getElementById('admin-rooms-list');
-    if(!list) return;
-    try {
-        const res = await fetch(`${API_URL}/admin/rooms`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
-        const result = await res.json();
-        if(result.success) {
-            let html = '';
-            result.rooms.forEach(r => {
-                html += `
-                    <div style="background:#131722; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <div><strong>${r.username}</strong> - Mod: ${r.mode} | Not: ${r.description || 'Yok'}</div>
-                        <button class="primary small" style="background:#ef4444;" onclick="adminDeleteRoom(${r.id})">Kaldır</button>
+    <!-- 3. İLAN OLUŞTURMA SAYFASI -->
+    <div class="page" id="page-create-room" style="max-width: 100% !important; padding: 40px 20px !important;">
+        <div class="subpage-wrapper" style="max-width: 1200px; margin: 0 auto;">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card" style="max-width: 1000px !important;">
+                <h2>İlan Oluştur</h2>
+                <form id="room-form" onsubmit="createRoom(event)">
+                    
+                    <label>Ajan Seçimi (En Fazla 3 Ajan Seçin veya Farketmez)</label>
+                    <div class="agent-picker-grid" id="agent-picker-container"></div>
+                    <input type="hidden" name="selected_agents" id="selected-agents-input">
+
+                    <label>Oyun Modu</label>
+                    <select name="mode">
+                        <option value="Dereceli">Dereceli</option>
+                        <option value="Derecesiz">Derecesiz</option>
+                        <option value="Rekabetçi">Rekabetçi</option>
+                    </select>
+
+                    <label>Yaş Sınırı</label>
+                    <select name="age">
+                        <option value="Farketmez">Farketmez</option>
+                        <option value="16+">16+</option>
+                        <option value="18+">18+</option>
+                    </select>
+
+                    <label class="check"><input type="checkbox" name="microphone" checked> Mikrofon Gerekli</label>
+                    
+                    <label>Takım Şartları / Not</label>
+                    <textarea name="description" placeholder="Örn: Saygılı oyuncular gelsin, line-up bilen olsun."></textarea>
+                    
+                    <button type="submit" class="primary wide">İlanı Yayınla</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 5'Lİ TAKIM BUL SAYFASI -->
+    <div class="page" id="page-matchmaking">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card center">
+                <h2>5'li Takım Bul</h2>
+                <p class="muted">Profilindeki ranka göre akıllı aralıkta eşleşme yapıyoruz.</p>
+                <button class="primary wide" onclick="loadMatchmaking()">Eşleşme Ara</button>
+                <div id="matchmaking-results" style="margin-top:20px; text-align:left;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. PROFİL SAYFASI -->
+    <div class="page" id="page-profile">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card narrow">
+                <h2>Profilim</h2>
+                <form id="profile-form" onsubmit="updateProfile(event)">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" id="prof-username" disabled style="opacity:0.6;">
+                    <label>Valorant ID</label>
+                    <input type="text" id="prof-valorant" required>
+                    <label>Rank</label>
+                    <select id="prof-rank">
+                        <option value="Demir 1">Demir 1</option><option value="Demir 2">Demir 2</option><option value="Demir 3">Demir 3</option>
+                        <option value="Bronz 1">Bronz 1</option><option value="Bronz 2">Bronz 2</option><option value="Bronz 3">Bronz 3</option>
+                        <option value="Gümüş 1">Gümüş 1</option><option value="Gümüş 2">Gümüş 2</option><option value="Gümüş 3">Gümüş 3</option>
+                        <option value="Altın 1">Altın 1</option><option value="Altın 2">Altın 2</option><option value="Altın 3">Altın 3</option>
+                        <option value="Platin 1">Platin 1</option><option value="Platin 2">Platin 2</option><option value="Platin 3">Platin 3</option>
+                        <option value="Elmas 1">Elmas 1</option><option value="Elmas 2">Elmas 2</option><option value="Elmas 3">Elmas 3</option>
+                        <option value="Yücelik 1">Yücelik 1</option><option value="Yücelik 2">Yücelik 2</option><option value="Yücelik 3">Yücelik 3</option>
+                        <option value="Ölümsüzlük 1">Ölümsüzlük 1</option><option value="Ölümsüzlük 2">Ölümsüzlük 2</option><option value="Ölümsüzlük 3">Ölümsüzlük 3</option>
+                        <option value="Radiant">Radiant</option>
+                    </select>
+                    <label>Ana Rol</label>
+                    <select id="prof-role">
+                        <option value="Duelist">Duelist</option><option value="Controller">Controller</option>
+                        <option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex">Flex</option>
+                    </select>
+                    <button type="submit" class="primary wide">Bilgileri Güncelle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. GİRİŞ YAP SAYFASI -->
+    <div class="page" id="page-login">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card narrow">
+                <h2>Giriş Yap</h2>
+                <form onsubmit="loginUser(event)">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" name="username" required>
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
+                    <button type="submit" class="primary wide">Giriş Yap</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. KAYIT OL SAYFASI -->
+    <div class="page" id="page-register">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card narrow">
+                <h2>Kayıt Ol</h2>
+                <form onsubmit="registerUser(event)">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" name="username" required>
+                    
+                    <label>Valorant ID (Riot ID # Etiket)</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" name="valName" placeholder="İsim" required style="flex: 2;">
+                        <span style="font-weight: 900; color: #a855f7; font-size: 18px;">#</span>
+                        <input type="text" name="valTag" placeholder="Etiket" required style="flex: 1;">
                     </div>
-                `;
-            });
-            list.innerHTML = html || '<p class="muted">Hiç ilan yok.</p>';
-        }
-    } catch(err) { console.error(err); }
-}
 
-async function adminDeleteRoom(roomId) {
-    await fetch(`${API_URL}/admin/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
-    loadAdminRooms();
-}
+                    <label>Rank</label>
+                    <select name="rank">
+                        <option value="Demir 1">Demir 1</option><option value="Demir 2">Demir 2</option><option value="Demir 3">Demir 3</option>
+                        <option value="Bronz 1">Bronz 1</option><option value="Bronz 2">Bronz 2</option><option value="Bronz 3">Bronz 3</option>
+                        <option value="Gümüş 1" selected>Gümüş 1</option><option value="Gümüş 2">Gümüş 2</option><option value="Gümüş 3">Gümüş 3</option>
+                        <option value="Altın 1">Altın 1</option><option value="Altın 2">Altın 2</option><option value="Altın 3">Altın 3</option>
+                        <option value="Platin 1">Platin 1</option><option value="Platin 2">Platin 2</option><option value="Platin 3">Platin 3</option>
+                        <option value="Elmas 1">Elmas 1</option><option value="Elmas 2">Elmas 2</option><option value="Elmas 3">Elmas 3</option>
+                        <option value="Yücelik 1">Yücelik 1</option><option value="Yücelik 2">Yücelik 2</option><option value="Yücelik 3">Yücelik 3</option>
+                        <option value="Ölümsüzlük 1">Ölümsüzlük 1</option><option value="Ölümsüzlük 2">Ölümsüzlük 2</option><option value="Ölümsüzlük 3">Ölümsüzlük 3</option>
+                        <option value="Radiant">Radiant</option>
+                    </select>
 
-// === 5'Lİ TAKIM BUL (RANK ARALIĞI FİLTRESİ) ===
-const rankList = [
-    "Demir 1", "Demir 2", "Demir 3", "Bronz 1", "Bronz 2", "Bronz 3",
-    "Gümüş 1", "Gümüş 2", "Gümüş 3", "Altın 1", "Altın 2", "Altın 3",
-    "Platin 1", "Platin 2", "Platin 3", "Elmas 1", "Elmas 2", "Elmas 3",
-    "Yücelik 1", "Yücelik 2", "Yücelik 3", "Ölümsüzlük 1", "Ölümsüzlük 2", "Ölümsüzlük 3", "Radiant"
-];
+                    <label>Ana Rol</label>
+                    <select name="role">
+                        <option value="Duelist">Duelist</option><option value="Controller">Controller</option><option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex" selected>Flex</option>
+                    </select>
 
-async function loadMatchmaking() {
-    const results = document.getElementById('matchmaking-results');
-    if (!results) return;
-    try {
-        const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
-        const result = await res.json();
-        if(!result.success) { results.innerHTML = '<p class="muted">Önce giriş yapmalısınız.</p>'; return; }
-        
-        let myRank = result.user.rank || 'Gümüş 1';
-        let myRankIndex = rankList.indexOf(myRank);
-        let maxRankIndex = Math.min(rankList.length - 1, myRankIndex + 3);
-        let minRankIndex = Math.max(0, myRankIndex - 3);
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
 
-        results.innerHTML = `<h3>Senin Rankın: ${myRank} (Eşleşme Aralığı: ${rankList[minRankIndex]} - ${rankList[maxRankIndex]})</h3><p class="muted">Bu aralıktaki oyuncular yakında listelenecektir.</p>`;
-    } catch(err) { console.error(err); }
-}
+                    <label>Şifre (Tekrar)</label>
+                    <input type="password" name="passwordConfirm" required>
 
-document.addEventListener('DOMContentLoaded', () => { checkAuthState(); if(document.getElementById('rooms-list')) loadRooms(); });
+                    <button type="submit" class="primary wide">Hesap Oluştur</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. ADMIN PANELİ SAYFASI -->
+    <div class="page" id="page-admin">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="color: #ef4444; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 10px;">🛡️ Yönetici (Admin) Paneli</h2>
+                <div style="margin-top: 25px;">
+                    <h3>Aktif İlanlar Yönetimi</h3>
+                    <div id="admin-rooms-list" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. ÇEKİLİŞ SAYFASI -->
+    <div class="page" id="page-giveaway">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card center" style="max-width: 800px; margin: 0 auto;">
+                <h2 style="color: #a855f7; margin-bottom: 15px;">🎁 SMOKGG Özel Çekiliş Alanı</h2>
+                <p class="muted" style="margin-bottom: 25px;">Çekiliş detayları, katılım şartları ve kazananlar burada yer alacak.</p>
+                
+                <div style="background: #131722; border: 1px solid rgba(168, 85, 247, 0.3); padding: 25px; border-radius: 12px;">
+                    <h3>Çekilişe Katıl</h3>
+                    <p class="muted" style="margin: 10px 0 20px 0;">Aşağıdaki butona basarak aktif çekilişimize adını yazdırabilirsin!</p>
+                    <button class="primary" onclick="alert('Çekilişe katılımınız başarıyla alındı!')">Çekilişe Katılım Sağla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>VALOTAKIM &copy; 2026 - Tüm hakları saklıdır.</footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
