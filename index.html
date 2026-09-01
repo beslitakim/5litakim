@@ -50,8 +50,8 @@
                 </div>
 
                 <div class="bottom-auth-bar" id="auth-buttons">
-                    <button class="primary" style="background: #eb0029; box-shadow: 0 0 15px rgba(235,0,41,0.4);" onclick="socialLogin('Riot')">Riot Games ile Giriş Yap</button>
-                    <button class="secondary" onclick="socialLogin('Google')">Google ile Giriş Yap</button>
+                    <button class="secondary" onclick="switchPage('login')">Giriş Yap</button>
+                    <button class="primary" onclick="switchPage('register')">Kayıt Ol</button>
                 </div>
                 <div class="bottom-auth-bar" id="user-menu" style="display:none; align-items:center; gap:15px; margin-top:25px;">
                     <span id="topbar-username" style="font-weight:700; color:#a855f7;"></span>
@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <!-- 2. İLANLAR SAYFASI (1 Kişi Lazım) -->
+    <!-- 2. İLANLAR SAYFASI -->
     <div class="page" id="page-rooms" style="max-width: 100% !important; padding: 40px 60px !important;">
         <div class="subpage-wrapper" style="max-width: 1400px; margin: 0 auto;">
             <div class="subpage-nav-top">
@@ -197,6 +197,78 @@
                         <option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex">Flex</option>
                     </select>
                     <button type="submit" class="primary wide">Bilgileri Güncelle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. GİRİŞ YAP SAYFASI -->
+    <div class="page" id="page-login">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card narrow">
+                <h2>Giriş Yap</h2>
+                <form onsubmit="loginUser(event)">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" name="username" required>
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
+                    <button type="submit" class="primary wide">Giriş Yap</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. KAYIT OL SAYFASI (Valorant ID # ayrılmış ve Çift Şifre Onaylı) -->
+    <div class="page" id="page-register">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card narrow">
+                <h2>Kayıt Ol</h2>
+                <form onsubmit="registerUser(event)">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" name="username" required>
+                    
+                    <label>Valorant ID (Riot ID # Etiket)</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" name="valName" placeholder="İsim (Örn: Zerg)" required style="flex: 2;">
+                        <span style="font-weight: 900; color: #a855f7; font-size: 18px;">#</span>
+                        <input type="text" name="valTag" placeholder="Etiket (Örn: TR1)" required style="flex: 1;">
+                    </div>
+
+                    <label>Rank</label>
+                    <select name="rank">
+                        <option value="Demir 1">Demir 1</option><option value="Demir 2">Demir 2</option><option value="Demir 3">Demir 3</option>
+                        <option value="Bronz 1">Bronz 1</option><option value="Bronz 2">Bronz 2</option><option value="Bronz 3">Bronz 3</option>
+                        <option value="Gümüş 1" selected>Gümüş 1</option><option value="Gümüş 2">Gümüş 2</option><option value="Gümüş 3">Gümüş 3</option>
+                        <option value="Altın 1">Altın 1</option><option value="Altın 2">Altın 2</option><option value="Altın 3">Altın 3</option>
+                        <option value="Platin 1">Platin 1</option><option value="Platin 2">Platin 2</option><option value="Platin 3">Platin 3</option>
+                        <option value="Elmas 1">Elmas 1</option><option value="Elmas 2">Elmas 2</option><option value="Elmas 3">Elmas 3</option>
+                        <option value="Yücelik 1">Yücelik 1</option><option value="Yücelik 2">Yücelik 2</option><option value="Yücelik 3">Yücelik 3</option>
+                        <option value="Ölümsüzlük 1">Ölümsüzlük 1</option><option value="Ölümsüzlük 2">Ölümsüzlük 2</option><option value="Ölümsüzlük 3">Ölümsüzlük 3</option>
+                        <option value="Radiant">Radiant</option>
+                    </select>
+
+                    <label>Ana Rol</label>
+                    <select name="role">
+                        <option value="Duelist">Duelist</option><option value="Controller">Controller</option><option value="Initiator">Initiator</option><option value="Sentinel">Sentinel</option><option value="Flex" selected>Flex</option>
+                    </select>
+
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
+
+                    <label>Şifre (Tekrar)</label>
+                    <input type="password" name="passwordConfirm" required>
+
+                    <button type="submit" class="primary wide">Hesap Oluştur</button>
                 </form>
             </div>
         </div>
