@@ -8,13 +8,12 @@
 </head>
 <body>
 
-    <!-- 1. ANA MENÜ (Sağ Tarafta Çekiliş Paneli) -->
+    <!-- 1. ANA MENÜ (Mobil Uyumlu Flex Yapısı) -->
     <div class="page active" id="page-home">
         <div class="gankster-hero-container">
             <div class="hero-bg-gif" style="background-image: url('images/arka-plan.gif');"></div>
             <div class="gankster-dark-overlay"></div>
 
-            <!-- Flex Yapısı: Sol ve Sağ Sütun -->
             <div class="gankster-hero-content-flex">
                 
                 <!-- SOL SÜTUN: Ana İçerik -->
@@ -64,27 +63,27 @@
                         <button class="secondary small" onclick="logout()">Çıkış Yap</button>
                     </div>
 
+                    <!-- GÖRSELDEKİ GİBİ MOR SMOKGG KUTUSU -->
                     <div class="smokgg-hero-showcase">
                         <div class="smokgg-container">
                             <a href="https://www.youtube.com/@SmokGG01" target="_blank" style="display: inline-block; text-decoration: none;">
                                 <img src="images/youtube.png" alt="SMOKGG Logo" class="smokgg-badge-img">
                             </a>
                             <p class="smokgg-footer-text">
-                                Bu uygulama 
-                                <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link"><strong>SMOKGG</strong></a> 
-                                YouTube Kanalı Aboneleri İçin Özel Olarak Yapılmıştır.
+                                Bu uygulama <a href="https://www.youtube.com/@SmokGG01" target="_blank" class="smokgg-link">SMOKGG</a> YouTube Kanalı Aboneleri İçin Özel Olarak<br>Yapılmıştır.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- SAĞ SÜTUN: Görseldeki İstediğin Kırmızı Çekiliş Kutuları -->
+                <!-- SAĞ SÜTUN: GÖRSELDEKİ GİBİ KIRMIZI ÇEKİLİŞ KUTULARI -->
                 <div class="home-sidebar-giveaway">
-                    <!-- Üst Kutu: Logo ve Çekiliş Tarihi -->
+                    <!-- Üst Kutu: Logo, Tarih ve Sayfaya Git Butonu -->
                     <div class="sidebar-giveaway-header">
                         <img src="images/cekilis.png" alt="Çekiliş Logo" class="sidebar-cekilis-logo">
                         <h3>30 EYLÜL 2026<br>825 VK ÇEKİLİŞİ</h3>
-                        <button class="primary small wide" onclick="joinGiveaway()" style="margin-top: 10px;">Çekilişe Katıl</button>
+                        <!-- Butona tıklayınca doğrudan çekiliş sayfasına gider -->
+                        <button class="giveaway-join-btn" onclick="switchPage('giveaway')">Çekilişe Katıl</button>
                     </div>
 
                     <!-- Alt Kutu: Çekilişe Katılanlar Listesi -->
@@ -311,6 +310,36 @@
                     <h3>Aktif İlanlar Yönetimi</h3>
                     <div id="admin-rooms-list" style="margin-top: 15px;"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. ÇEKİLİŞ DETAY VE KATILIM SAYFASI -->
+    <div class="page" id="page-giveaway">
+        <div class="subpage-wrapper">
+            <div class="subpage-nav-top">
+                <div class="subpage-logo-area" onclick="switchPage('home')" style="cursor: pointer; display: inline-block;">
+                    <img src="images/logo.png" alt="VALOTAKIM Logo" style="height: 45px; object-fit: contain;">
+                </div>
+            </div>
+            <div class="form-card center" style="max-width: 900px; margin: 0 auto; background: #11141a; border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);">
+                
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 25px;">
+                    <img src="images/cekilis.png" alt="Çekiliş Logo" style="height: 90px; object-fit: contain;">
+                    <h2 style="color: #ef4444; font-size: 26px; font-weight: 900; letter-spacing: 1px;">30 EYLÜL 2026 825 VK ÇEKİLİŞİ</h2>
+                    <p class="muted">Sisteme kayıt ol, butona bas ve ödülü kazanma şansını yakala!</p>
+                </div>
+                
+                <!-- Sadece buradan katılım yapılıyor -->
+                <button class="giveaway-join-btn" onclick="joinGiveaway()" style="max-width: 300px; margin-bottom: 30px;">Çekilişe Katılım Sağla</button>
+
+                <div style="background: #0b0d12; border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; text-align: left;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">📋 Çekilişe Katılanlar Listesi</h3>
+                    <div id="giveaway-participants-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- JS ile buraya yüklenecek -->
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

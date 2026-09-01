@@ -370,4 +370,135 @@ footer { text-align: center; color: #666e7b; font-size: 12px; padding: 20px; bor
     color: #a855f7;
     display: flex;
     justify-content: space-between;
+}/* Ana Sayfa Esnek Düzen ve Mobil Uyumluluk */
+.gankster-hero-content-flex {
+    position: relative !important;
+    z-index: 3 !important;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1300px;
+    gap: 40px;
+    padding: 20px;
+}
+
+/* SMOKGG Kutusu (Mor Çerçeveli) */
+.smokgg-hero-showcase { margin-top: 30px; display: flex; justify-content: center; width: 100%; }
+.smokgg-container {
+    background: rgba(168, 85, 247, 0.05);
+    border: 1px solid #a855f7;
+    padding: 20px 30px;
+    border-radius: 14px;
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+.smokgg-badge-img { height: 50px; width: auto; object-fit: contain; }
+.smokgg-footer-text {
+    color: #e2e8f0;
+    font-size: 15px;
+    text-align: center;
+    line-height: 1.5;
+}
+.smokgg-footer-text .smokgg-link {
+    color: #a855f7;
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+/* Çekiliş Kutuları Sağ Sidebar (Kırmızı Çerçeveli) */
+.home-sidebar-giveaway {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.sidebar-giveaway-header, .sidebar-giveaway-list-box {
+    background: #11141a;
+    border: 2px solid #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 25px 20px;
+    text-align: center;
+}
+
+.sidebar-cekilis-logo {
+    height: 70px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.sidebar-giveaway-header h3 {
+    color: #ef4444;
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1.4;
+    margin: 15px 0;
+}
+
+/* Çekilişe Katıl Butonu (Mor) */
+.giveaway-join-btn {
+    background: #a855f7;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    width: 100%;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.giveaway-join-btn:hover { background: #9333ea; transform: translateY(-2px); }
+
+/* Çekiliş Listesi Kutusu */
+.sidebar-giveaway-list-box { text-align: left; padding: 20px; }
+.sidebar-giveaway-list-box h4 {
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.participants-scroll-area {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 250px;
+}
+.participant-item-row {
+    background: #131722;
+    border: 1px solid #303642;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #a855f7;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Mobil Cihazlar İçin Yan Yana Olan Sütunları Alt Alta Al (Responsive) */
+@media (max-width: 992px) {
+    .gankster-hero-content-flex {
+        flex-direction: column;
+        align-items: center;
+    }
+    .home-sidebar-giveaway {
+        width: 100%;
+        max-width: 450px;
+        margin-top: 20px;
+    }
 }
