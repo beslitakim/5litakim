@@ -6,14 +6,13 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'valotakim_gizli_anahtar_2026';
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'valotakim_gizli_2026';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Veritabanı
 const db = new Database('valotakim.db');
 
 db.exec(`
@@ -73,7 +72,6 @@ if (!adminExists) {
   console.log('✅ Admin oluşturuldu: admin / admin123');
 }
 
-// Middleware
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ success: false, message: 'Token yok' });
@@ -93,14 +91,14 @@ function adminMiddleware(req, res, next) {
   next();
 }
 
-// AUTH ENDPOINTS
+// AUTH
 app.post('/api/register', (req, res) => {
   try {
     const { username, valName, valTag, rank, role, password, passwordConfirm } = req.body;
     if (!username || !valName || !password) return res.json({ success: false, message: 'Tüm alanları doldurun' });
     if (password !== passwordConfirm) return res.json({ success: false, message: 'Şifreler uyuşmuyor' });
     if (db.prepare('SELECT id FROM users WHERE username = ?').get(username)) {
-      return res.json({ success: false, message: 'Kullanıcı adı alınmış' });
+      return res.json({ success: false, message: 'Kullanıcı adı zaten kayıtlı' });
     }
     const hash = bcrypt.hashSync(password, 10);
     const result = db.prepare('INSERT INTO users (username, valorant_id, rank, role, password_hash) VALUES (?, ?, ?, ?, ?)')
@@ -117,7 +115,7 @@ app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
     if (!user) return res.json({ success: false, message: 'Kullanıcı bulunamadı' });
-    if (user.is_banned) return res.json({ success: false, message: 'Hesap banlandı: ' + (user.ban_reason || '') });
+    if (user.is_banned) return res.json({ success: false, message: 'Hesap banlandı' });
     if (!bcrypt.compareSync(password, user.password_hash)) return res.json({ success: false, message: 'Şifre yanlış' });
     
     const token = jwt.sign({ id: user.id, username: user.username, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
@@ -134,6 +132,13 @@ app.post('/api/login', (req, res) => {
 
 app.get('/api/profile', authMiddleware, (req, res) => {
   res.json({ success: true, user: req.user });
+});
+
+app.put('/api/profile', authMiddleware, (req, res) => {
+  const { valorant_id, rank, role } = req.body;
+  db.prepare('UPDATE users SET valorant_id = ?, rank = ?, role = ? WHERE id = ?')
+    .run(valorant_id, rank, role, req.user.id);
+  res.json({ success: true });
 });
 
 // ROOMS
@@ -293,5 +298,4 @@ app.post('/api/admin/users/:id/toggle-admin', authMiddleware, adminMiddleware, (
 
 app.listen(PORT, () => {
   console.log(`🚀 VALOTAKIM çalışıyor: http://localhost:${PORT}`);
-  console.log(`📦 Admin: admin / admin123`);
 });
